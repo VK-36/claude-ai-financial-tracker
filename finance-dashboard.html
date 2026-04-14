@@ -1,0 +1,1356 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VK Personal Finance Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@300;400;500&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --surface: #12121a;
+    --surface2: #1a1a26;
+    --border: #252535;
+    --accent: #7c6af7;
+    --accent2: #e8875a;
+    --accent3: #4ecdc4;
+    --green: #56cfae;
+    --red: #f06e7a;
+    --text: #e8e8f0;
+    --muted: #7070a0;
+    --card-glow: rgba(124,106,247,0.08);
+  }
+
+  * { margin:0; padding:0; box-sizing:border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    min-height: 100vh;
+    display: flex;
+    overflow-x: hidden;
+  }
+
+  /* ── Sidebar ── */
+  .sidebar {
+    width: 240px;
+    min-height: 100vh;
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    padding: 28px 0;
+    position: fixed;
+    left:0; top:0; bottom:0;
+    z-index: 100;
+  }
+
+  .logo {
+    padding: 0 24px 32px;
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: 22px;
+    letter-spacing: -0.5px;
+  }
+  .logo span { color: var(--accent); }
+
+  .nav-section {
+    font-size: 10px;
+    color: var(--muted);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    padding: 0 24px 10px;
+    margin-top: 8px;
+  }
+
+  .nav-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 11px 24px;
+    cursor: pointer;
+    color: var(--muted);
+    font-size: 13px;
+    transition: all 0.2s;
+    border-left: 2px solid transparent;
+    user-select: none;
+  }
+  .nav-item:hover { color: var(--text); background: var(--surface2); }
+  .nav-item.active {
+    color: var(--accent);
+    border-left-color: var(--accent);
+    background: rgba(124,106,247,0.08);
+  }
+  .nav-item .icon { font-size: 16px; width: 20px; text-align: center; }
+
+  /* ── Main ── */
+  .main {
+    margin-left: 240px;
+    flex: 1;
+    min-height: 100vh;
+    background: var(--bg);
+  }
+
+  .topbar {
+    height: 64px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 32px;
+    position: sticky;
+    top: 0;
+    background: rgba(10,10,15,0.85);
+    backdrop-filter: blur(12px);
+    z-index: 50;
+  }
+  .page-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 18px;
+    font-weight: 700;
+  }
+  .topbar-right { display: flex; align-items: center; gap: 16px; }
+  .avatar {
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Syne', sans-serif;
+    font-size: 14px; font-weight: 700;
+    cursor: pointer;
+  }
+
+  /* ── Pages ── */
+  .page { display: none; padding: 32px; animation: fadeIn 0.3s ease; }
+  .page.active { display: block; }
+  @keyframes fadeIn { from { opacity:0; transform: translateY(8px); } to { opacity:1; transform: translateY(0); } }
+
+  /* ── Cards ── */
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    margin-bottom: 28px;
+  }
+  .stats-grid.two { grid-template-columns: repeat(2, 1fr); }
+
+  .stat-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 24px;
+    position: relative;
+    overflow: hidden;
+    cursor: pointer;
+    transition: border-color 0.2s, transform 0.2s;
+  }
+  .stat-card:hover { border-color: var(--accent); transform: translateY(-2px); }
+  .stat-card::before {
+    content: '';
+    position: absolute; inset: 0;
+    background: var(--card-glow);
+    opacity: 0;
+    transition: opacity 0.2s;
+  }
+  .stat-card:hover::before { opacity: 1; }
+
+  .stat-label {
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+  }
+  .stat-value {
+    font-family: 'Syne', sans-serif;
+    font-size: 28px;
+    font-weight: 700;
+    letter-spacing: -1px;
+  }
+  .stat-sub {
+    font-size: 12px;
+    color: var(--muted);
+    margin-top: 6px;
+  }
+  .stat-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 11px;
+    padding: 3px 8px;
+    border-radius: 6px;
+    margin-top: 8px;
+    font-weight: 500;
+  }
+  .badge-green { background: rgba(86,207,174,0.15); color: var(--green); }
+  .badge-red { background: rgba(240,110,122,0.15); color: var(--red); }
+  .badge-accent { background: rgba(124,106,247,0.15); color: var(--accent); }
+
+  .stat-icon {
+    position: absolute; right: 20px; top: 20px;
+    font-size: 28px; opacity: 0.15;
+  }
+
+  /* ── Section Header ── */
+  .section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+  }
+  .section-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 16px;
+    font-weight: 700;
+  }
+
+  /* ── Buttons ── */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 9px 18px;
+    border-radius: 10px;
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    cursor: pointer;
+    border: none;
+    transition: all 0.2s;
+    font-weight: 500;
+  }
+  .btn-primary {
+    background: var(--accent);
+    color: #fff;
+  }
+  .btn-primary:hover { background: #9480ff; transform: translateY(-1px); }
+  .btn-outline {
+    background: transparent;
+    color: var(--text);
+    border: 1px solid var(--border);
+  }
+  .btn-outline:hover { border-color: var(--accent); color: var(--accent); }
+  .btn-danger {
+    background: rgba(240,110,122,0.15);
+    color: var(--red);
+    border: 1px solid rgba(240,110,122,0.2);
+  }
+  .btn-danger:hover { background: rgba(240,110,122,0.25); }
+  .btn-sm { padding: 6px 12px; font-size: 11px; border-radius: 7px; }
+
+  /* ── Table ── */
+  .table-wrap {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    overflow: hidden;
+  }
+  table { width: 100%; border-collapse: collapse; }
+  thead tr { border-bottom: 1px solid var(--border); }
+  th {
+    text-align: left;
+    font-size: 10px;
+    color: var(--muted);
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    padding: 14px 20px;
+    font-weight: 500;
+  }
+  td {
+    padding: 14px 20px;
+    font-size: 13px;
+    border-bottom: 1px solid rgba(37,37,53,0.6);
+  }
+  tr:last-child td { border-bottom: none; }
+  tbody tr { transition: background 0.15s; }
+  tbody tr:hover { background: var(--surface2); }
+
+  .tag {
+    display: inline-flex;
+    padding: 3px 9px;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 500;
+  }
+  .tag-blue { background: rgba(124,106,247,0.15); color: var(--accent); }
+  .tag-orange { background: rgba(232,135,90,0.15); color: var(--accent2); }
+  .tag-teal { background: rgba(78,205,196,0.15); color: var(--accent3); }
+  .tag-green { background: rgba(86,207,174,0.15); color: var(--green); }
+  .tag-red { background: rgba(240,110,122,0.15); color: var(--red); }
+
+  .pos { color: var(--green); }
+  .neg { color: var(--red); }
+
+  /* ── Modal ── */
+  .modal-overlay {
+    display: none;
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.7);
+    backdrop-filter: blur(4px);
+    z-index: 200;
+    align-items: center;
+    justify-content: center;
+  }
+  .modal-overlay.open { display: flex; animation: fadeIn 0.2s ease; }
+
+  .modal {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 32px;
+    width: 480px;
+    max-width: 95vw;
+    max-height: 90vh;
+    overflow-y: auto;
+  }
+  .modal-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 20px;
+    font-weight: 700;
+    margin-bottom: 24px;
+  }
+  .modal-close {
+    float: right;
+    background: none;
+    border: none;
+    color: var(--muted);
+    font-size: 22px;
+    cursor: pointer;
+    line-height: 1;
+    margin-top: -4px;
+  }
+  .modal-close:hover { color: var(--text); }
+
+  /* ── Form ── */
+  .form-group { margin-bottom: 18px; }
+  .form-label { font-size: 11px; color: var(--muted); letter-spacing: 1px; text-transform: uppercase; margin-bottom: 8px; display: block; }
+  .form-input {
+    width: 100%;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 11px 14px;
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    font-size: 13px;
+    transition: border-color 0.2s;
+    outline: none;
+    appearance: none;
+  }
+  .form-input:focus { border-color: var(--accent); }
+  select.form-input { cursor: pointer; }
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .form-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 24px; }
+
+  /* ── Goal Cards ── */
+  .goals-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+  }
+  .goal-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 24px;
+    transition: border-color 0.2s;
+  }
+  .goal-card:hover { border-color: var(--accent); }
+  .goal-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px; }
+  .goal-name { font-family: 'Syne', sans-serif; font-size: 17px; font-weight: 700; }
+  .goal-target { font-size: 12px; color: var(--muted); margin-top: 4px; }
+  .goal-emoji { font-size: 28px; }
+
+  .progress-bar {
+    height: 6px;
+    background: var(--surface2);
+    border-radius: 99px;
+    overflow: hidden;
+    margin: 14px 0 10px;
+  }
+  .progress-fill {
+    height: 100%;
+    border-radius: 99px;
+    background: linear-gradient(90deg, var(--accent), var(--accent3));
+    transition: width 0.8s cubic-bezier(.4,0,.2,1);
+  }
+  .goal-meta { display: flex; justify-content: space-between; font-size: 12px; color: var(--muted); }
+  .goal-pct { font-family: 'Syne', sans-serif; font-size: 22px; font-weight: 700; color: var(--accent); }
+
+  .linked-assets { margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--border); }
+  .linked-label { font-size: 10px; color: var(--muted); letter-spacing: 1px; text-transform: uppercase; margin-bottom: 8px; }
+  .asset-chip {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: rgba(124,106,247,0.1);
+    border: 1px solid rgba(124,106,247,0.2);
+    color: var(--accent);
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 11px;
+    margin: 3px 3px 3px 0;
+  }
+  .chip-remove { cursor: pointer; opacity: 0.6; }
+  .chip-remove:hover { opacity: 1; }
+
+  /* ── Mini chart sparkline ── */
+  .sparkline { width: 100%; height: 40px; }
+
+  /* ── Net Worth Banner ── */
+  .networth-banner {
+    background: linear-gradient(135deg, #1a1230 0%, #12121a 100%);
+    border: 1px solid rgba(124,106,247,0.3);
+    border-radius: 20px;
+    padding: 28px 32px;
+    margin-bottom: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: relative;
+    overflow: hidden;
+  }
+  .networth-banner::after {
+    content: '';
+    position: absolute;
+    right: -40px; top: -40px;
+    width: 180px; height: 180px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(124,106,247,0.2) 0%, transparent 70%);
+  }
+  .networth-label { font-size: 11px; color: var(--muted); letter-spacing: 2px; text-transform: uppercase; margin-bottom: 8px; }
+  .networth-value { font-family: 'Syne', sans-serif; font-size: 42px; font-weight: 800; letter-spacing: -2px; }
+  .networth-sub { font-size: 13px; color: var(--muted); margin-top: 6px; }
+
+  .empty-state {
+    text-align: center;
+    padding: 48px 24px;
+    color: var(--muted);
+  }
+  .empty-icon { font-size: 40px; margin-bottom: 12px; }
+  .empty-text { font-size: 13px; }
+
+  /* ── Scrollbar ── */
+  ::-webkit-scrollbar { width: 5px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 99px; }
+
+  .divider { height: 1px; background: var(--border); margin: 24px 0; }
+
+  .summary-row {
+    display: flex; gap: 24px; margin-bottom: 24px;
+  }
+  .summary-item {
+    flex: 1;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px 20px;
+  }
+  .summary-item-label { font-size: 10px; color: var(--muted); letter-spacing: 1px; text-transform: uppercase; margin-bottom: 6px; }
+  .summary-item-value { font-family: 'Syne', sans-serif; font-size: 22px; font-weight: 700; }
+
+  .tab-row { display: flex; gap: 4px; margin-bottom: 20px; }
+  .tab-btn {
+    padding: 8px 16px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: none;
+    color: var(--muted);
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .tab-btn.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+  .tab-btn:hover:not(.active) { color: var(--text); border-color: var(--accent); }
+</style>
+</head>
+<body>
+
+<!-- Sidebar -->
+<nav class="sidebar">
+  <div class="logo">VK Finance<span>Hub</span></div>
+
+  <div class="nav-section">Overview</div>
+  <div class="nav-item active" onclick="navigate('dashboard', this)">
+    <span class="icon">◈</span> Dashboard
+  </div>
+
+  <div class="nav-section">Portfolio</div>
+  <div class="nav-item" onclick="navigate('assets', this)">
+    <span class="icon">◎</span> Assets
+  </div>
+
+  <div class="nav-section">Cash Flow</div>
+  <div class="nav-item" onclick="navigate('cashflow', this)">
+    <span class="icon">⇅</span> Income & Expenses
+  </div>
+  <div class="nav-item" onclick="navigate('income', this)">
+    <span class="icon">＋</span> Add Income
+  </div>
+  <div class="nav-item" onclick="navigate('expense', this)">
+    <span class="icon">－</span> Add Expense
+  </div>
+
+  <div class="nav-section">Planning</div>
+  <div class="nav-item" onclick="navigate('goals', this)">
+    <span class="icon">◉</span> Goal Tracker
+  </div>
+</nav>
+
+<!-- Main -->
+<div class="main">
+  <div class="topbar">
+    <div class="page-title" id="page-title">Dashboard</div>
+    <div class="topbar-right">
+      <div style="font-size:12px; color:var(--muted);">Apr 2026</div>
+      <div class="avatar">VK</div>
+    </div>
+  </div>
+
+  <!-- ── DASHBOARD ── -->
+  <div class="page active" id="page-dashboard">
+    <div class="networth-banner">
+      <div>
+        <div class="networth-label">Total Net Worth</div>
+        <div class="networth-value" id="nw-total">₹0</div>
+        <div class="networth-sub" id="nw-sub">Assets − Liabilities</div>
+      </div>
+      <div style="text-align:right; position:relative; z-index:1;">
+        <div class="stat-label">This Month</div>
+        <div id="nw-change" style="font-family:'Syne',sans-serif; font-size:24px; font-weight:700;" class="pos">+₹0</div>
+      </div>
+    </div>
+
+    <div class="stats-grid">
+      <div class="stat-card" onclick="navigate('assets', document.querySelector('[onclick*=assets]'))">
+        <div class="stat-icon">◎</div>
+        <div class="stat-label">Invested Value</div>
+        <div class="stat-value" id="d-invested">₹0</div>
+        <div class="stat-sub">Total cost basis</div>
+        <span class="stat-badge badge-accent" id="d-assets-count">0 assets</span>
+      </div>
+      <div class="stat-card" onclick="navigate('assets', document.querySelector('[onclick*=assets]'))">
+        <div class="stat-icon">📈</div>
+        <div class="stat-label">Current Value</div>
+        <div class="stat-value" id="d-current">₹0</div>
+        <div class="stat-sub">Market value today</div>
+        <span class="stat-badge" id="d-profit-badge">₹0 profit</span>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">💹</div>
+        <div class="stat-label">Total Profit / Loss</div>
+        <div class="stat-value" id="d-profit">₹0</div>
+        <div class="stat-sub">Unrealised gain/loss</div>
+        <span class="stat-badge" id="d-profit-pct-badge">0%</span>
+      </div>
+      <div class="stat-card" onclick="navigate('income', document.querySelector('[onclick*=income]'))">
+        <div class="stat-icon">↑</div>
+        <div class="stat-label">Total Income</div>
+        <div class="stat-value pos" id="d-income">₹0</div>
+        <div class="stat-sub">All time</div>
+      </div>
+      <div class="stat-card" onclick="navigate('expense', document.querySelector('[onclick*=expense]'))">
+        <div class="stat-icon">↓</div>
+        <div class="stat-label">Total Expenses</div>
+        <div class="stat-value neg" id="d-expenses">₹0</div>
+        <div class="stat-sub">All time</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">⚡</div>
+        <div class="stat-label">Monthly Surplus</div>
+        <div class="stat-value" id="d-surplus">₹0</div>
+        <div class="stat-sub">Income − Expenses</div>
+      </div>
+    </div>
+
+    <div class="section-header">
+      <div class="section-title">Recent Transactions</div>
+      <button class="btn btn-outline btn-sm" onclick="navigate('cashflow', document.querySelector('[onclick*=cashflow]'))">View All</button>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr>
+          <th>Date</th><th>Description</th><th>Category</th><th>Type</th><th>Amount</th>
+        </tr></thead>
+        <tbody id="recent-txns">
+          <tr><td colspan="5"><div class="empty-state"><div class="empty-icon">📋</div><div class="empty-text">No transactions yet. Add income or expenses.</div></div></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ── ASSETS ── -->
+  <div class="page" id="page-assets">
+    <div class="section-header">
+      <div>
+        <div class="section-title">Asset Portfolio</div>
+        <div style="font-size:12px; color:var(--muted); margin-top:4px;">Track your investments</div>
+      </div>
+      <button class="btn btn-primary" onclick="openModal('modal-add-asset')">＋ Add Asset</button>
+    </div>
+
+    <div class="stats-grid" style="margin-bottom:24px;">
+      <div class="stat-card">
+        <div class="stat-label">Invested</div>
+        <div class="stat-value" id="a-invested">₹0</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Current Value</div>
+        <div class="stat-value" id="a-current">₹0</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">P&L</div>
+        <div class="stat-value" id="a-pnl">₹0</div>
+        <span class="stat-badge" id="a-pnl-badge">0%</span>
+      </div>
+    </div>
+
+    <div class="table-wrap">
+      <table>
+        <thead><tr>
+          <th>Asset</th><th>Type</th><th>Units</th><th>Buy Price</th><th>Current Price</th><th>Invested</th><th>Current Value</th><th>P&L</th><th>Actions</th>
+        </tr></thead>
+        <tbody id="assets-tbody">
+          <tr><td colspan="9"><div class="empty-state"><div class="empty-icon">◎</div><div class="empty-text">No assets yet. Add your first investment.</div></div></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ── CASH FLOW ── -->
+  <div class="page" id="page-cashflow">
+    <div class="section-header">
+      <div class="section-title">Income & Expenses</div>
+      <div style="display:flex; gap:10px;">
+        <button class="btn btn-outline btn-sm" onclick="navigate('income', document.querySelector('[onclick*=income]'))">＋ Income</button>
+        <button class="btn btn-primary btn-sm" onclick="navigate('expense', document.querySelector('[onclick*=expense]'))">＋ Expense</button>
+      </div>
+    </div>
+
+    <div class="summary-row">
+      <div class="summary-item">
+        <div class="summary-item-label">Total Income</div>
+        <div class="summary-item-value pos" id="cf-income">₹0</div>
+      </div>
+      <div class="summary-item">
+        <div class="summary-item-label">Total Expenses</div>
+        <div class="summary-item-value neg" id="cf-expenses">₹0</div>
+      </div>
+      <div class="summary-item">
+        <div class="summary-item-label">Net Cash Flow</div>
+        <div class="summary-item-value" id="cf-net">₹0</div>
+      </div>
+    </div>
+
+    <div class="tab-row">
+      <button class="tab-btn active" onclick="filterCashflow('all', this)">All</button>
+      <button class="tab-btn" onclick="filterCashflow('income', this)">Income</button>
+      <button class="tab-btn" onclick="filterCashflow('expense', this)">Expenses</button>
+    </div>
+
+    <div class="table-wrap">
+      <table>
+        <thead><tr>
+          <th>Date</th><th>Description</th><th>Category</th><th>Type</th><th>Amount</th><th>Action</th>
+        </tr></thead>
+        <tbody id="cashflow-tbody">
+          <tr><td colspan="6"><div class="empty-state"><div class="empty-icon">⇅</div><div class="empty-text">No transactions recorded yet.</div></div></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ── ADD INCOME ── -->
+  <div class="page" id="page-income">
+    <div class="section-title" style="margin-bottom:24px;">Add Income</div>
+    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:24px; align-items:start;">
+      <div style="background:var(--surface); border:1px solid var(--border); border-radius:16px; padding:28px;">
+        <div style="font-size:14px; font-weight:600; margin-bottom:20px; font-family:'Syne',sans-serif;">New Income Entry</div>
+        <div class="form-group">
+          <label class="form-label">Description</label>
+          <input class="form-input" id="inc-desc" placeholder="e.g. Monthly Salary">
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Amount (₹)</label>
+            <input class="form-input" id="inc-amount" type="number" placeholder="50000">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Date</label>
+            <input class="form-input" id="inc-date" type="date">
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Category</label>
+          <select class="form-input" id="inc-cat">
+            <option>Salary</option>
+            <option>Freelance</option>
+            <option>Dividend</option>
+            <option>Rental</option>
+            <option>Business</option>
+            <option>Gift</option>
+            <option>Other</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Notes (optional)</label>
+          <input class="form-input" id="inc-notes" placeholder="Additional details...">
+        </div>
+        <button class="btn btn-primary" style="width:100%; justify-content:center;" onclick="addIncome()">Add Income</button>
+      </div>
+
+      <div>
+        <div class="section-header"><div class="section-title">Recent Income</div></div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Date</th><th>Description</th><th>Category</th><th>Amount</th><th></th></tr></thead>
+            <tbody id="income-history">
+              <tr><td colspan="5"><div class="empty-state"><div class="empty-icon">↑</div><div class="empty-text">No income recorded.</div></div></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── ADD EXPENSE ── -->
+  <div class="page" id="page-expense">
+    <div class="section-title" style="margin-bottom:24px;">Add Expense</div>
+    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:24px; align-items:start;">
+      <div style="background:var(--surface); border:1px solid var(--border); border-radius:16px; padding:28px;">
+        <div style="font-size:14px; font-weight:600; margin-bottom:20px; font-family:'Syne',sans-serif;">New Expense Entry</div>
+        <div class="form-group">
+          <label class="form-label">Description</label>
+          <input class="form-input" id="exp-desc" placeholder="e.g. Grocery Shopping">
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Amount (₹)</label>
+            <input class="form-input" id="exp-amount" type="number" placeholder="2000">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Date</label>
+            <input class="form-input" id="exp-date" type="date">
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Category</label>
+          <select class="form-input" id="exp-cat">
+            <option>Food & Dining</option>
+            <option>Housing</option>
+            <option>Transport</option>
+            <option>Healthcare</option>
+            <option>Entertainment</option>
+            <option>Shopping</option>
+            <option>Education</option>
+            <option>Utilities</option>
+            <option>Insurance</option>
+            <option>Other</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Notes (optional)</label>
+          <input class="form-input" id="exp-notes" placeholder="Additional details...">
+        </div>
+        <button class="btn btn-primary" style="width:100%; justify-content:center; background:var(--accent2);" onclick="addExpense()">Add Expense</button>
+      </div>
+
+      <div>
+        <div class="section-header"><div class="section-title">Recent Expenses</div></div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Date</th><th>Description</th><th>Category</th><th>Amount</th><th></th></tr></thead>
+            <tbody id="expense-history">
+              <tr><td colspan="5"><div class="empty-state"><div class="empty-icon">↓</div><div class="empty-text">No expenses recorded.</div></div></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── GOALS ── -->
+  <div class="page" id="page-goals">
+    <div class="section-header">
+      <div>
+        <div class="section-title">Goal Tracker</div>
+        <div style="font-size:12px; color:var(--muted); margin-top:4px;">Link assets to financial goals</div>
+      </div>
+      <button class="btn btn-primary" onclick="openModal('modal-add-goal')">＋ Add Goal</button>
+    </div>
+    <div class="goals-grid" id="goals-grid">
+      <div style="grid-column:1/-1"><div class="empty-state"><div class="empty-icon">◉</div><div class="empty-text">No goals yet. Add your first financial goal.</div></div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ── MODALS ── -->
+
+<!-- Add Asset Modal -->
+<div class="modal-overlay" id="modal-add-asset">
+  <div class="modal">
+    <div class="modal-title">Add Asset <button class="modal-close" onclick="closeModal('modal-add-asset')">×</button></div>
+    <div class="form-group">
+      <label class="form-label">Asset Name</label>
+      <input class="form-input" id="a-name" placeholder="e.g. Reliance Industries">
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Type</label>
+        <select class="form-input" id="a-type">
+          <option>Stock</option>
+          <option>Mutual Fund</option>
+          <option>Bank FD</option>
+	  <option>Bank RD</option>
+          <option>Gold</option>
+          <option>Silver</option>
+          <option>Real Estate</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Units / Qty</label>
+        <input class="form-input" id="a-units" type="number" placeholder="10">
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Buy Price (₹)</label>
+        <input class="form-input" id="a-buy" type="number" placeholder="1500">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Current Price (₹)</label>
+        <input class="form-input" id="a-cur" type="number" placeholder="1800">
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Purchase Date</label>
+      <input class="form-input" id="a-date" type="date">
+    </div>
+    <div class="form-actions">
+      <button class="btn btn-outline" onclick="closeModal('modal-add-asset')">Cancel</button>
+      <button class="btn btn-primary" onclick="addAsset()">Add Asset</button>
+    </div>
+  </div>
+</div>
+
+<!-- Edit Asset Modal -->
+<div class="modal-overlay" id="modal-edit-asset">
+  <div class="modal">
+    <div class="modal-title">Edit Asset <button class="modal-close" onclick="closeModal('modal-edit-asset')">×</button></div>
+    <input type="hidden" id="edit-idx">
+    <div class="form-group">
+      <label class="form-label">Asset Name</label>
+      <input class="form-input" id="ea-name">
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Type</label>
+        <select class="form-input" id="ea-type">
+          <option>Stock</option><option>Mutual Fund</option><option>Crypto</option>
+          <option>Gold</option><option>Real Estate</option><option>FD / Bond</option><option>Other</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Units</label>
+        <input class="form-input" id="ea-units" type="number">
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Buy Price (₹)</label>
+        <input class="form-input" id="ea-buy" type="number">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Current Price (₹)</label>
+        <input class="form-input" id="ea-cur" type="number">
+      </div>
+    </div>
+    <div class="form-actions">
+      <button class="btn btn-outline" onclick="closeModal('modal-edit-asset')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveEditAsset()">Save Changes</button>
+    </div>
+  </div>
+</div>
+
+<!-- Sell Asset Modal -->
+<div class="modal-overlay" id="modal-sell-asset">
+  <div class="modal">
+    <div class="modal-title">Sell Asset <button class="modal-close" onclick="closeModal('modal-sell-asset')">×</button></div>
+    <input type="hidden" id="sell-idx">
+    <div id="sell-asset-info" style="background:var(--surface2); border-radius:10px; padding:14px; margin-bottom:20px; font-size:13px;"></div>
+    <div class="form-group">
+      <label class="form-label">Units to Sell</label>
+      <input class="form-input" id="sell-units" type="number" placeholder="5">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Sell Price per Unit (₹)</label>
+      <input class="form-input" id="sell-price" type="number" placeholder="Current market price">
+    </div>
+    <div class="form-actions">
+      <button class="btn btn-outline" onclick="closeModal('modal-sell-asset')">Cancel</button>
+      <button class="btn btn-danger" onclick="confirmSell()">Confirm Sell</button>
+    </div>
+  </div>
+</div>
+
+<!-- Add Goal Modal -->
+<div class="modal-overlay" id="modal-add-goal">
+  <div class="modal">
+    <div class="modal-title">Add Goal <button class="modal-close" onclick="closeModal('modal-add-goal')">×</button></div>
+    <div class="form-group">
+      <label class="form-label">Goal Name</label>
+      <input class="form-input" id="g-name" placeholder="e.g. Retirement Fund">
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Emoji</label>
+        <input class="form-input" id="g-emoji" placeholder="🏠" maxlength="2">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Target Amount (₹)</label>
+        <input class="form-input" id="g-target" type="number" placeholder="5000000">
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Target Date</label>
+      <input class="form-input" id="g-date" type="date">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Link Assets</label>
+      <div id="goal-asset-checklist" style="max-height:160px; overflow-y:auto; background:var(--surface2); border-radius:10px; padding:12px;">
+        <div style="color:var(--muted); font-size:12px;">No assets available. Add assets first.</div>
+      </div>
+    </div>
+    <div class="form-actions">
+      <button class="btn btn-outline" onclick="closeModal('modal-add-goal')">Cancel</button>
+      <button class="btn btn-primary" onclick="addGoal()">Add Goal</button>
+    </div>
+  </div>
+</div>
+
+<!-- Link Assets to Goal Modal -->
+<div class="modal-overlay" id="modal-link-assets">
+  <div class="modal">
+    <div class="modal-title">Link Assets <button class="modal-close" onclick="closeModal('modal-link-assets')">×</button></div>
+    <input type="hidden" id="link-goal-idx">
+    <div id="link-asset-checklist" style="max-height:260px; overflow-y:auto; background:var(--surface2); border-radius:10px; padding:12px;"></div>
+    <div class="form-actions">
+      <button class="btn btn-outline" onclick="closeModal('modal-link-assets')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveLinkAssets()">Save</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── State ──
+let assets = JSON.parse(localStorage.getItem('ww_assets') || '[]');
+let transactions = JSON.parse(localStorage.getItem('ww_txns') || '[]');
+let goals = JSON.parse(localStorage.getItem('ww_goals') || '[]');
+
+function save() {
+  localStorage.setItem('ww_assets', JSON.stringify(assets));
+  localStorage.setItem('ww_txns', JSON.stringify(transactions));
+  localStorage.setItem('ww_goals', JSON.stringify(goals));
+}
+
+const fmt = n => '₹' + Number(n).toLocaleString('en-IN', {maximumFractionDigits:2});
+const pct = (a,b) => b===0 ? '0%' : ((a/b)*100).toFixed(1)+'%';
+
+// ── Navigation ──
+function navigate(page, navEl) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('page-' + page).classList.add('active');
+  if(navEl) navEl.classList.add('active');
+  const titles = {
+    dashboard:'Dashboard', assets:'Assets', cashflow:'Income & Expenses',
+    income:'Add Income', expense:'Add Expense', goals:'Goal Tracker'
+  };
+  document.getElementById('page-title').textContent = titles[page] || page;
+  if(page==='dashboard') renderDashboard();
+  if(page==='assets') renderAssets();
+  if(page==='cashflow') renderCashflow();
+  if(page==='income') renderIncomeHistory();
+  if(page==='expense') renderExpenseHistory();
+  if(page==='goals') renderGoals();
+}
+
+// ── Modal ──
+function openModal(id) {
+  if(id==='modal-add-goal') buildGoalAssetChecklist('goal-asset-checklist', null);
+  document.getElementById(id).classList.add('open');
+}
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+document.querySelectorAll('.modal-overlay').forEach(m => m.addEventListener('click', e => { if(e.target===m) m.classList.remove('open'); }));
+
+// ── Assets ──
+function addAsset() {
+  const name = document.getElementById('a-name').value.trim();
+  const type = document.getElementById('a-type').value;
+  const units = parseFloat(document.getElementById('a-units').value) || 0;
+  const buy = parseFloat(document.getElementById('a-buy').value) || 0;
+  const cur = parseFloat(document.getElementById('a-cur').value) || 0;
+  const date = document.getElementById('a-date').value;
+  if(!name || !units || !buy) return alert('Please fill required fields.');
+  assets.push({ name, type, units, buy, cur: cur||buy, date, id: Date.now() });
+  save();
+  closeModal('modal-add-asset');
+  ['a-name','a-units','a-buy','a-cur'].forEach(id => document.getElementById(id).value='');
+  renderAssets();
+  renderDashboard();
+}
+
+function renderAssets() {
+  const tbody = document.getElementById('assets-tbody');
+  if(!assets.length) {
+    tbody.innerHTML = `<tr><td colspan="9"><div class="empty-state"><div class="empty-icon">◎</div><div class="empty-text">No assets yet.</div></div></td></tr>`;
+    updateAssetSummary(0,0);
+    return;
+  }
+  let totalInv=0, totalCur=0;
+  tbody.innerHTML = assets.map((a,i) => {
+    const inv = a.units * a.buy;
+    const cur = a.units * a.cur;
+    const pnl = cur - inv;
+    const pnlPct = inv ? ((pnl/inv)*100).toFixed(1) : 0;
+    totalInv += inv; totalCur += cur;
+    const typeTag = {Stock:'tag-blue','Mutual Fund':'tag-teal',Crypto:'tag-orange',Gold:'tag-green','Real Estate':'tag-accent','FD / Bond':'tag-teal'}[a.type]||'tag-blue';
+    return `<tr>
+      <td><div style="font-weight:500;">${a.name}</div><div style="font-size:11px;color:var(--muted);">${a.date||''}</div></td>
+      <td><span class="tag ${typeTag}">${a.type}</span></td>
+      <td>${a.units}</td>
+      <td>${fmt(a.buy)}</td>
+      <td>${fmt(a.cur)}</td>
+      <td>${fmt(inv)}</td>
+      <td>${fmt(cur)}</td>
+      <td class="${pnl>=0?'pos':'neg'}">${pnl>=0?'+':''}${fmt(pnl)}<div style="font-size:11px;">${pnl>=0?'+':''}${pnlPct}%</div></td>
+      <td>
+        <div style="display:flex;gap:6px;">
+          <button class="btn btn-outline btn-sm" onclick="openEditAsset(${i})">Edit</button>
+          <button class="btn btn-sm" style="background:rgba(78,205,196,0.1);color:var(--accent3);border:1px solid rgba(78,205,196,0.2);" onclick="openSellAsset(${i})">Sell</button>
+        </div>
+      </td>
+    </tr>`;
+  }).join('');
+  updateAssetSummary(totalInv, totalCur);
+}
+
+function updateAssetSummary(inv, cur) {
+  const pnl = cur - inv;
+  document.getElementById('a-invested').textContent = fmt(inv);
+  document.getElementById('a-current').textContent = fmt(cur);
+  const pnlEl = document.getElementById('a-pnl');
+  pnlEl.textContent = (pnl>=0?'+':'')+fmt(pnl);
+  pnlEl.className = 'stat-value '+(pnl>=0?'pos':'neg');
+  const b = document.getElementById('a-pnl-badge');
+  const p = inv ? ((pnl/inv)*100).toFixed(1) : 0;
+  b.textContent = (pnl>=0?'+':'')+p+'%';
+  b.className = 'stat-badge '+(pnl>=0?'badge-green':'badge-red');
+}
+
+function openEditAsset(i) {
+  const a = assets[i];
+  document.getElementById('edit-idx').value = i;
+  document.getElementById('ea-name').value = a.name;
+  document.getElementById('ea-type').value = a.type;
+  document.getElementById('ea-units').value = a.units;
+  document.getElementById('ea-buy').value = a.buy;
+  document.getElementById('ea-cur').value = a.cur;
+  openModal('modal-edit-asset');
+}
+function saveEditAsset() {
+  const i = document.getElementById('edit-idx').value;
+  assets[i].name = document.getElementById('ea-name').value;
+  assets[i].type = document.getElementById('ea-type').value;
+  assets[i].units = parseFloat(document.getElementById('ea-units').value)||0;
+  assets[i].buy = parseFloat(document.getElementById('ea-buy').value)||0;
+  assets[i].cur = parseFloat(document.getElementById('ea-cur').value)||0;
+  save(); closeModal('modal-edit-asset'); renderAssets(); renderDashboard();
+}
+
+function openSellAsset(i) {
+  const a = assets[i];
+  document.getElementById('sell-idx').value = i;
+  document.getElementById('sell-asset-info').innerHTML = `<strong>${a.name}</strong> &nbsp;|&nbsp; ${a.units} units available &nbsp;|&nbsp; Current: ${fmt(a.cur)}`;
+  document.getElementById('sell-price').value = a.cur;
+  document.getElementById('sell-units').value = '';
+  openModal('modal-sell-asset');
+}
+function confirmSell() {
+  const i = parseInt(document.getElementById('sell-idx').value);
+  const units = parseFloat(document.getElementById('sell-units').value)||0;
+  const price = parseFloat(document.getElementById('sell-price').value)||0;
+  const a = assets[i];
+  if(units<=0||units>a.units) return alert('Invalid units.');
+  const proceeds = units * price;
+  const cost = units * a.buy;
+  transactions.push({
+    date: new Date().toISOString().split('T')[0],
+    desc: `Sold ${units} units of ${a.name}`,
+    cat: 'Investment',
+    type: 'income',
+    amount: proceeds,
+    id: Date.now()
+  });
+  if(units >= a.assets) {
+    assets.splice(i,1);
+  } else {
+    assets[i].units -= units;
+  }
+  save(); closeModal('modal-sell-asset'); renderAssets(); renderDashboard();
+  alert(`Sold ${units} units of ${a.name} for ${fmt(proceeds)}. P&L: ${fmt(proceeds-cost)}`);
+}
+
+// ── Transactions ──
+function addIncome() {
+  const desc = document.getElementById('inc-desc').value.trim();
+  const amount = parseFloat(document.getElementById('inc-amount').value)||0;
+  const date = document.getElementById('inc-date').value || new Date().toISOString().split('T')[0];
+  const cat = document.getElementById('inc-cat').value;
+  const notes = document.getElementById('inc-notes').value;
+  if(!desc||!amount) return alert('Please fill description and amount.');
+  transactions.push({date,desc,cat,type:'income',amount,notes,id:Date.now()});
+  save();
+  ['inc-desc','inc-amount','inc-notes'].forEach(id=>document.getElementById(id).value='');
+  renderIncomeHistory();
+  renderDashboard();
+}
+
+function addExpense() {
+  const desc = document.getElementById('exp-desc').value.trim();
+  const amount = parseFloat(document.getElementById('exp-amount').value)||0;
+  const date = document.getElementById('exp-date').value || new Date().toISOString().split('T')[0];
+  const cat = document.getElementById('exp-cat').value;
+  const notes = document.getElementById('exp-notes').value;
+  if(!desc||!amount) return alert('Please fill description and amount.');
+  transactions.push({date,desc,cat,type:'expense',amount,notes,id:Date.now()});
+  save();
+  ['exp-desc','exp-amount','exp-notes'].forEach(id=>document.getElementById(id).value='');
+  renderExpenseHistory();
+  renderDashboard();
+}
+
+function deleteTxn(id) {
+  if(!confirm('Delete this transaction?')) return;
+  transactions = transactions.filter(t=>t.id!==id);
+  save(); renderDashboard(); renderCashflow(); renderIncomeHistory(); renderExpenseHistory();
+}
+
+function renderIncomeHistory() {
+  const tbody = document.getElementById('income-history');
+  const inc = transactions.filter(t=>t.type==='income').sort((a,b)=>b.date.localeCompare(a.date));
+  if(!inc.length) { tbody.innerHTML=`<tr><td colspan="5"><div class="empty-state"><div class="empty-icon">↑</div><div class="empty-text">No income recorded.</div></div></td></tr>`; return; }
+  tbody.innerHTML = inc.map(t=>`<tr>
+    <td>${t.date}</td>
+    <td>${t.desc}</td>
+    <td><span class="tag tag-green">${t.cat}</span></td>
+    <td class="pos">${fmt(t.amount)}</td>
+    <td><button class="btn btn-danger btn-sm" onclick="deleteTxn(${t.id})">✕</button></td>
+  </tr>`).join('');
+}
+
+function renderExpenseHistory() {
+  const tbody = document.getElementById('expense-history');
+  const exp = transactions.filter(t=>t.type==='expense').sort((a,b)=>b.date.localeCompare(a.date));
+  if(!exp.length) { tbody.innerHTML=`<tr><td colspan="5"><div class="empty-state"><div class="empty-icon">↓</div><div class="empty-text">No expenses recorded.</div></div></td></tr>`; return; }
+  tbody.innerHTML = exp.map(t=>`<tr>
+    <td>${t.date}</td>
+    <td>${t.desc}</td>
+    <td><span class="tag tag-orange">${t.cat}</span></td>
+    <td class="neg">${fmt(t.amount)}</td>
+    <td><button class="btn btn-danger btn-sm" onclick="deleteTxn(${t.id})">✕</button></td>
+  </tr>`).join('');
+}
+
+let cashflowFilter = 'all';
+function filterCashflow(f, btn) {
+  cashflowFilter = f;
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  renderCashflow();
+}
+
+function renderCashflow() {
+  const totalInc = transactions.filter(t=>t.type==='income').reduce((s,t)=>s+t.amount,0);
+  const totalExp = transactions.filter(t=>t.type==='expense').reduce((s,t)=>s+t.amount,0);
+  document.getElementById('cf-income').textContent = fmt(totalInc);
+  document.getElementById('cf-expenses').textContent = fmt(totalExp);
+  const netEl = document.getElementById('cf-net');
+  const net = totalInc - totalExp;
+  netEl.textContent = (net>=0?'+':'')+fmt(net);
+  netEl.className = 'summary-item-value '+(net>=0?'pos':'neg');
+
+  const filtered = transactions.filter(t => cashflowFilter==='all' || t.type===cashflowFilter)
+    .sort((a,b)=>b.date.localeCompare(a.date));
+  const tbody = document.getElementById('cashflow-tbody');
+  if(!filtered.length) { tbody.innerHTML=`<tr><td colspan="6"><div class="empty-state"><div class="empty-icon">⇅</div><div class="empty-text">No transactions.</div></div></td></tr>`; return; }
+  tbody.innerHTML = filtered.map(t=>`<tr>
+    <td>${t.date}</td>
+    <td>${t.desc}</td>
+    <td><span class="tag ${t.type==='income'?'tag-green':'tag-orange'}">${t.cat}</span></td>
+    <td><span class="tag ${t.type==='income'?'tag-green':'tag-red'}">${t.type==='income'?'Income':'Expense'}</span></td>
+    <td class="${t.type==='income'?'pos':'neg'}">${t.type==='income'?'+':'-'}${fmt(t.amount)}</td>
+    <td><button class="btn btn-danger btn-sm" onclick="deleteTxn(${t.id})">✕</button></td>
+  </tr>`).join('');
+}
+
+// ── Dashboard ──
+function renderDashboard() {
+  const totalInv = assets.reduce((s,a)=>s+a.units*a.buy,0);
+  const totalCur = assets.reduce((s,a)=>s+a.units*a.cur,0);
+  const profit = totalCur - totalInv;
+  const totalInc = transactions.filter(t=>t.type==='income').reduce((s,t)=>s+t.amount,0);
+  const totalExp = transactions.filter(t=>t.type==='expense').reduce((s,t)=>s+t.amount,0);
+  const netWorth = totalCur + (totalInc - totalExp);
+
+  document.getElementById('nw-total').textContent = fmt(netWorth);
+  document.getElementById('d-invested').textContent = fmt(totalInv);
+  document.getElementById('d-current').textContent = fmt(totalCur);
+
+  const profitEl = document.getElementById('d-profit');
+  profitEl.textContent = (profit>=0?'+':'')+fmt(profit);
+  profitEl.className = 'stat-value '+(profit>=0?'pos':'neg');
+
+  const pb = document.getElementById('d-profit-badge');
+  pb.textContent = (profit>=0?'+':'')+fmt(profit)+' P&L';
+  pb.className = 'stat-badge '+(profit>=0?'badge-green':'badge-red');
+
+  const ppb = document.getElementById('d-profit-pct-badge');
+  const pp = totalInv ? ((profit/totalInv)*100).toFixed(1) : 0;
+  ppb.textContent = (profit>=0?'+':'')+pp+'%';
+  ppb.className = 'stat-badge '+(profit>=0?'badge-green':'badge-red');
+
+  document.getElementById('d-income').textContent = fmt(totalInc);
+  document.getElementById('d-expenses').textContent = fmt(totalExp);
+  document.getElementById('d-assets-count').textContent = assets.length+' assets';
+
+  const surplus = totalInc - totalExp;
+  const surplusEl = document.getElementById('d-surplus');
+  surplusEl.textContent = (surplus>=0?'+':'')+fmt(surplus);
+  surplusEl.className = 'stat-value '+(surplus>=0?'pos':'neg');
+
+  const nwChange = document.getElementById('nw-change');
+  nwChange.textContent = (surplus>=0?'+':'')+fmt(surplus);
+  nwChange.className = surplus>=0?'pos':'neg';
+
+  // Recent txns
+  const recent = [...transactions].sort((a,b)=>b.date.localeCompare(a.date)).slice(0,6);
+  const tbody = document.getElementById('recent-txns');
+  if(!recent.length) {
+    tbody.innerHTML=`<tr><td colspan="5"><div class="empty-state"><div class="empty-icon">📋</div><div class="empty-text">No transactions yet.</div></div></td></tr>`;
+    return;
+  }
+  tbody.innerHTML = recent.map(t=>`<tr>
+    <td>${t.date}</td>
+    <td>${t.desc}</td>
+    <td><span class="tag ${t.type==='income'?'tag-green':'tag-orange'}">${t.cat}</span></td>
+    <td><span class="tag ${t.type==='income'?'tag-green':'tag-red'}">${t.type==='income'?'Income':'Expense'}</span></td>
+    <td class="${t.type==='income'?'pos':'neg'}">${t.type==='income'?'+':'-'}${fmt(t.amount)}</td>
+  </tr>`).join('');
+}
+
+// ── Goals ──
+function buildGoalAssetChecklist(containerId, goalIdx) {
+  const container = document.getElementById(containerId);
+  if(!assets.length) { container.innerHTML='<div style="color:var(--muted);font-size:12px;">No assets available. Add assets first.</div>'; return; }
+  const linked = goalIdx !== null ? (goals[goalIdx]?.linkedAssets || []) : [];
+  container.innerHTML = assets.map((a,i)=>`
+    <label style="display:flex;align-items:center;gap:10px;padding:8px;cursor:pointer;border-radius:8px;transition:background 0.15s;" onmouseover="this.style.background='var(--surface)'" onmouseout="this.style.background='none'">
+      <input type="checkbox" value="${i}" ${linked.includes(i)?'checked':''} style="accent-color:var(--accent);">
+      <span style="font-size:13px;">${a.name}</span>
+      <span class="tag tag-blue" style="margin-left:auto;font-size:10px;">${a.type}</span>
+      <span style="font-size:12px;color:var(--accent);">${fmt(a.units*a.cur)}</span>
+    </label>`).join('');
+}
+
+function addGoal() {
+  const name = document.getElementById('g-name').value.trim();
+  const emoji = document.getElementById('g-emoji').value || '🎯';
+  const target = parseFloat(document.getElementById('g-target').value)||0;
+  const date = document.getElementById('g-date').value;
+  if(!name||!target) return alert('Please fill goal name and target.');
+  const checklist = document.querySelectorAll('#goal-asset-checklist input[type=checkbox]:checked');
+  const linkedAssets = Array.from(checklist).map(c=>parseInt(c.value));
+  goals.push({name, emoji, target, date, linkedAssets, id:Date.now()});
+  save(); closeModal('modal-add-goal'); renderGoals();
+  ['g-name','g-emoji','g-target','g-date'].forEach(id=>document.getElementById(id).value='');
+}
+
+function renderGoals() {
+  const grid = document.getElementById('goals-grid');
+  if(!goals.length) {
+    grid.innerHTML=`<div style="grid-column:1/-1"><div class="empty-state"><div class="empty-icon">◉</div><div class="empty-text">No goals yet. Add your first financial goal.</div></div></div>`;
+    return;
+  }
+  grid.innerHTML = goals.map((g,gi)=>{
+    const linkedValue = (g.linkedAssets||[]).reduce((s,ai)=>{
+      const a = assets[ai];
+      return a ? s + a.units*a.cur : s;
+    },0);
+    const progress = g.target ? Math.min((linkedValue/g.target)*100, 100) : 0;
+    const chips = (g.linkedAssets||[]).map(ai=>{
+      const a = assets[ai];
+      return a ? `<span class="asset-chip">${a.name} · ${fmt(a.units*a.cur)} <span class="chip-remove" onclick="unlinkAsset(${gi},${ai})">×</span></span>` : '';
+    }).join('');
+    const months = g.date ? Math.ceil((new Date(g.date)-new Date())/(1000*60*60*24*30)) : '—';
+    return `<div class="goal-card">
+      <div class="goal-header">
+        <div>
+          <div class="goal-name">${g.name}</div>
+          <div class="goal-target">Target: ${fmt(g.target)}</div>
+          ${g.date?`<div style="font-size:11px;color:var(--muted);margin-top:3px;">${g.date} · ${months>0?months+' months away':'Overdue'}</div>`:''}
+        </div>
+        <div>${g.emoji}</div>
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:baseline;">
+        <span style="font-size:12px;color:var(--muted);">${fmt(linkedValue)} saved</span>
+        <span class="goal-pct">${progress.toFixed(1)}%</span>
+      </div>
+      <div class="progress-bar"><div class="progress-fill" style="width:${progress}%"></div></div>
+      <div class="goal-meta"><span>${fmt(g.target - linkedValue)} remaining</span></div>
+      <div class="linked-assets">
+        <div class="linked-label">Linked Assets</div>
+        ${chips || '<span style="color:var(--muted);font-size:12px;">No assets linked</span>'}
+        <div style="margin-top:8px;">
+          <button class="btn btn-outline btn-sm" onclick="openLinkAssets(${gi})">+ Link Assets</button>
+          <button class="btn btn-danger btn-sm" style="margin-left:6px;" onclick="deleteGoal(${gi})">Delete</button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function unlinkAsset(gi, ai) {
+  goals[gi].linkedAssets = goals[gi].linkedAssets.filter(x=>x!==ai);
+  save(); renderGoals();
+}
+
+function deleteGoal(gi) {
+  if(!confirm('Delete this goal?')) return;
+  goals.splice(gi,1); save(); renderGoals();
+}
+
+function openLinkAssets(gi) {
+  document.getElementById('link-goal-idx').value = gi;
+  buildGoalAssetChecklist('link-asset-checklist', gi);
+  openModal('modal-link-assets');
+}
+
+function saveLinkAssets() {
+  const gi = parseInt(document.getElementById('link-goal-idx').value);
+  const checked = document.querySelectorAll('#link-asset-checklist input[type=checkbox]:checked');
+  goals[gi].linkedAssets = Array.from(checked).map(c=>parseInt(c.value));
+  save(); closeModal('modal-link-assets'); renderGoals();
+}
+
+// ── Init ──
+function init() {
+  // Set today's date as default
+  const today = new Date().toISOString().split('T')[0];
+  ['inc-date','exp-date','a-date'].forEach(id => { const el=document.getElementById(id); if(el) el.value=today; });
+  renderDashboard();
+}
+init();
+</script>
+</body>
+</html>
