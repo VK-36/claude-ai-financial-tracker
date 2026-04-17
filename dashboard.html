@@ -828,7 +828,8 @@ function confirmAddAsset(){
     notes: d.notes,
     isProperty: !!st.isProperty,
     sqft: d.sqft||null,
-    unit: st.unit||'units',
+    unit: st.hasUnits ? (st.unit || 'units') : null,
+    isValueBased: !st.hasUnits,
     unitLabel: st.unitLabel||'Units',
     principal: d.principal||null,
     rate: d.rate||null,
@@ -856,7 +857,7 @@ function renderAssets(){
   const list = assetFilter==='all' ? assets : assets.filter(a=>a.category===assetFilter);
   let totInv=0, totCur=0;
   assets.forEach(a=>{ 
-    if (a.category === 'Debt' && !a.unit) {
+    if (a.isValueBased) {
     // ✅ value-based assets
     totInv += a.buy;
     totCur += a.cur;
@@ -894,7 +895,7 @@ function renderAssets(){
     const realIdx = assets.indexOf(a);
   let inv, cur;
 
-if (a.category === 'Debt' && !a.unit) {
+if (a.isValueBased) {
   inv = a.buy;
   cur = a.cur;
 }
@@ -910,7 +911,7 @@ else {
     const pp  = inv ? ((pnl/inv)*100).toFixed(1):0;
 let qtyDisp;
 
-if (a.category === 'Debt' && !a.unit) {
+if (a.isValueBased) {
   qtyDisp = '—'; // no units
 }
 else if (a.isProperty) {
@@ -921,19 +922,13 @@ else {
 }
     
  let buyDisp, curDisp;
-
-if (a.category === 'Debt' && !a.unit) {
-  // FD / RD / MIS → no per unit
-  buyDisp = fmt(a.buy);     // principal
-  curDisp = fmt(a.cur);     // maturity/current value
+if (a.isValueBased) {
+  buyDisp = fmt(a.buy);
+  curDisp = fmt(a.cur);
 }
 else if (a.isProperty) {
   buyDisp = fmt(a.buy * a.sqft);
   curDisp = fmt(a.cur * a.sqft);
-}
-else if (a.category === 'Debt' && !a.unit) {
-  buyDisp = fmt(a.buy);   // no /unit
-  curDisp = fmt(a.cur);   // no /unit
 }
 else {
   buyDisp = fmt(a.buy) + `/${a.unit || 'u'}`;
