@@ -220,18 +220,6 @@ select.form-input{cursor:pointer;}
     <div class="page-title" id="page-title">Dashboard</div>
    <div style="display:flex;align-items:center;gap:14px;">
   <div style="font-size:11px;color:var(--muted);" id="topbar-date"></div>
-
-  <button onclick="logout()" 
-    style="padding:6px 12px;
-           border-radius:8px;
-           background:#f06e7a;
-           border:none;
-           color:white;
-           cursor:pointer;
-           font-size:11px;">
-    Logout
-  </button>
-
   <div class="avatar">VK</div>
 </div>
     
@@ -1672,18 +1660,7 @@ function today(){ return new Date().toISOString().split('T')[0]; }
   document.getElementById('topbar-date').textContent = new Date().toLocaleDateString('en-IN',{month:'short',year:'numeric',day:'numeric'});
   ['inc-date','exp-date'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=today(); });
   renderDashboard();
-})();
-
-function logout() {
-  firebase.auth().signOut()
-    .then(() => {
-      window.location.href = "index.html";
-    })
-    .catch((error) => {
-      console.error("Logout error:", error);
-    });
-}
-    
+})();    
 </script>
 </body>
 </html>
