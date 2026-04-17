@@ -832,17 +832,6 @@ function confirmAddAsset(){
     rate: d.rate||null,
     tenure: d.tenure||null,
   });
-
-    const investedAmount = d.units * d.buy;
-
-transactions.push({
-  id: Date.now() + 1,
-  date: d.date,
-  desc: `Invested in ${d.name}`,
-  cat: 'Investment',
-  type: 'expense',
-  amount: investedAmount
-});
   save();
   // Reset wizard
   wiz = { step:1, category:'', subtype:'', formData:{} };
