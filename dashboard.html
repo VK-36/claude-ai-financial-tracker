@@ -931,6 +931,10 @@ else if (a.isProperty) {
   buyDisp = fmt(a.buy * a.sqft);
   curDisp = fmt(a.cur * a.sqft);
 }
+else if (a.category === 'Debt' && !a.unit) {
+  buyDisp = fmt(a.buy);   // no /unit
+  curDisp = fmt(a.cur);   // no /unit
+}
 else {
   buyDisp = fmt(a.buy) + `/${a.unit || 'u'}`;
   curDisp = fmt(a.cur) + `/${a.unit || 'u'}`;
