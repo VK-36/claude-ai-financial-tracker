@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Wealthwise — Personal Finance Dashboard</title>
+<title>VK — Personal Finance Dashboard</title>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
 :root {
@@ -204,16 +204,13 @@ select.form-input{cursor:pointer;}
 
 <!-- Sidebar -->
 <nav class="sidebar">
-  <div class="logo">Wealth<span>wise</span></div>
+  <div class="logo">VK<span>Wealth Hub</span></div>
   <div class="nav-section">Overview</div>
   <div class="nav-item active" onclick="navigate('dashboard',this)"><span class="icon">◈</span>Dashboard</div>
   <div class="nav-section">Portfolio</div>
   <div class="nav-item" onclick="navigate('assets',this)"><span class="icon">◎</span>Assets</div>
-  <div class="nav-item" onclick="navigate('add-asset',this)"><span class="icon">＋</span>Add Asset</div>
   <div class="nav-section">Cash Flow</div>
   <div class="nav-item" onclick="navigate('cashflow',this)"><span class="icon">⇅</span>Income & Expenses</div>
-  <div class="nav-item" onclick="navigate('income',this)"><span class="icon">↑</span>Add Income</div>
-  <div class="nav-item" onclick="navigate('expense',this)"><span class="icon">↓</span>Add Expense</div>
   <div class="nav-section">Planning</div>
   <div class="nav-item" onclick="navigate('goals',this)"><span class="icon">◉</span>Goal Tracker</div>
 </nav>
@@ -223,7 +220,7 @@ select.form-input{cursor:pointer;}
     <div class="page-title" id="page-title">Dashboard</div>
     <div style="display:flex;align-items:center;gap:14px;">
       <div style="font-size:11px;color:var(--muted);" id="topbar-date"></div>
-      <div class="avatar">R</div>
+      <div class="avatar">VK</div>
     </div>
   </div>
 
@@ -602,7 +599,7 @@ const ASSET_CONFIG = {
       { key:'phys-gold',  icon:'🥇', name:'Physical Gold',       hint:'Measured in grams',          hasUnits:true,  unit:'g',   unitLabel:'Grams',     priceLabel:'Price per gram (₹)' },
       { key:'gold-etf',   icon:'📊', name:'Gold ETF',             hint:'Exchange Traded Fund (units)',hasUnits:true,  unit:'units', unitLabel:'Units',   priceLabel:'Price per unit (₹)' },
       { key:'gold-mf',    icon:'📦', name:'Gold Mutual Fund',     hint:'Units in fund',              hasUnits:true,  unit:'units', unitLabel:'Units',   priceLabel:'NAV per unit (₹)' },
-      { key:'sgb',        icon:'📜', name:'Gold SGB',             hint:'Sovereign Gold Bond (grams)',hasUnits:true,  unit:'g',   unitLabel:'Grams (SGB)',priceLabel:'Issue price per gram (₹)' },
+      { key:'sgb',        icon:'📜', name:'Gold SGB',             hint:'Sovereign Gold Bond',  hasUnits:true,  unit:'units',   unitLabel:'Units',priceLabel:'Issue price per unit (₹)' },
       { key:'phys-silver',icon:'🥈', name:'Physical Silver',      hint:'Measured in grams',          hasUnits:true,  unit:'g',   unitLabel:'Grams',     priceLabel:'Price per gram (₹)' },
       { key:'silver-etf', icon:'📊', name:'Silver ETF',           hint:'Exchange Traded Fund (units)',hasUnits:true,  unit:'units', unitLabel:'Units',   priceLabel:'Price per unit (₹)' },
       { key:'silver-mf',  icon:'📦', name:'Silver Mutual Fund',   hint:'Units in fund',              hasUnits:true,  unit:'units', unitLabel:'Units',   priceLabel:'NAV per unit (₹)' },
