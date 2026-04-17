@@ -125,7 +125,7 @@ function signup() {
 
   auth.createUserWithEmailAndPassword(email, password)
     .then(() => {
-      alert("Family account created! Now login.");
+      alert("Account created! Now login.");
     })
     .catch(err => {
       document.getElementById("error-msg").innerText = err.message;
