@@ -1,0 +1,1192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Wealthwise — Personal Finance Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:#0a0a0f; --surface:#12121a; --surface2:#1a1a26; --surface3:#20202f;
+  --border:#252535; --accent:#7c6af7; --accent2:#e8875a; --accent3:#4ecdc4;
+  --green:#56cfae; --red:#f06e7a; --text:#e8e8f0; --muted:#7070a0;
+  --equity:#7c6af7; --debt:#4ecdc4; --commodity:#e8c55a; --realestate:#e8875a;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--bg);color:var(--text);font-family:'DM Mono',monospace;min-height:100vh;display:flex;overflow-x:hidden;}
+
+/* Sidebar */
+.sidebar{width:230px;min-height:100vh;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;padding:26px 0;position:fixed;left:0;top:0;bottom:0;z-index:100;}
+.logo{padding:0 22px 28px;font-family:'Syne',sans-serif;font-weight:800;font-size:21px;letter-spacing:-0.5px;}
+.logo span{color:var(--accent);}
+.nav-section{font-size:9px;color:var(--muted);letter-spacing:2px;text-transform:uppercase;padding:0 22px 8px;margin-top:6px;}
+.nav-item{display:flex;align-items:center;gap:11px;padding:10px 22px;cursor:pointer;color:var(--muted);font-size:12px;transition:all .2s;border-left:2px solid transparent;user-select:none;}
+.nav-item:hover{color:var(--text);background:var(--surface2);}
+.nav-item.active{color:var(--accent);border-left-color:var(--accent);background:rgba(124,106,247,.08);}
+.nav-item .icon{font-size:15px;width:18px;text-align:center;}
+
+/* Main */
+.main{margin-left:230px;flex:1;min-height:100vh;}
+.topbar{height:60px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 30px;position:sticky;top:0;background:rgba(10,10,15,.9);backdrop-filter:blur(12px);z-index:50;}
+.page-title{font-family:'Syne',sans-serif;font-size:17px;font-weight:700;}
+.avatar{width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;font-family:'Syne',sans-serif;font-size:13px;font-weight:700;cursor:pointer;}
+
+/* Pages */
+.page{display:none;padding:28px 30px;animation:fadeIn .3s ease;}
+.page.active{display:block;}
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+
+/* Cards & Grid */
+.stats-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:24px;}
+.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:22px;position:relative;overflow:hidden;cursor:pointer;transition:border-color .2s,transform .2s;}
+.stat-card:hover{border-color:var(--accent);transform:translateY(-2px);}
+.stat-label{font-size:10px;color:var(--muted);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:9px;}
+.stat-value{font-family:'Syne',sans-serif;font-size:26px;font-weight:700;letter-spacing:-1px;}
+.stat-icon{position:absolute;right:18px;top:18px;font-size:24px;opacity:.13;}
+.stat-sub{font-size:11px;color:var(--muted);margin-top:5px;}
+.stat-badge{display:inline-flex;align-items:center;gap:4px;font-size:10px;padding:2px 8px;border-radius:5px;margin-top:7px;font-weight:500;}
+.badge-green{background:rgba(86,207,174,.15);color:var(--green);}
+.badge-red{background:rgba(240,110,122,.15);color:var(--red);}
+.badge-accent{background:rgba(124,106,247,.15);color:var(--accent);}
+
+/* Net Worth Banner */
+.networth-banner{background:linear-gradient(135deg,#1a1230 0%,#12121a 100%);border:1px solid rgba(124,106,247,.3);border-radius:18px;padding:26px 30px;margin-bottom:22px;display:flex;align-items:center;justify-content:space-between;position:relative;overflow:hidden;}
+.networth-banner::after{content:'';position:absolute;right:-40px;top:-40px;width:180px;height:180px;border-radius:50%;background:radial-gradient(circle,rgba(124,106,247,.2) 0%,transparent 70%);}
+.networth-label{font-size:10px;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-bottom:7px;}
+.networth-value{font-family:'Syne',sans-serif;font-size:38px;font-weight:800;letter-spacing:-2px;}
+
+/* Table */
+.table-wrap{background:var(--surface);border:1px solid var(--border);border-radius:14px;overflow:hidden;}
+table{width:100%;border-collapse:collapse;}
+thead tr{border-bottom:1px solid var(--border);}
+th{text-align:left;font-size:9px;color:var(--muted);letter-spacing:1.5px;text-transform:uppercase;padding:13px 18px;font-weight:500;}
+td{padding:13px 18px;font-size:12px;border-bottom:1px solid rgba(37,37,53,.6);}
+tr:last-child td{border-bottom:none;}
+tbody tr{transition:background .15s;}
+tbody tr:hover{background:var(--surface2);}
+.tag{display:inline-flex;padding:2px 8px;border-radius:5px;font-size:10px;font-weight:500;}
+.tag-equity{background:rgba(124,106,247,.15);color:var(--equity);}
+.tag-debt{background:rgba(78,205,196,.15);color:var(--debt);}
+.tag-commodity{background:rgba(232,197,90,.15);color:var(--commodity);}
+.tag-realestate{background:rgba(232,135,90,.15);color:var(--realestate);}
+.tag-green{background:rgba(86,207,174,.15);color:var(--green);}
+.tag-red{background:rgba(240,110,122,.15);color:var(--red);}
+.tag-blue{background:rgba(124,106,247,.15);color:var(--accent);}
+.tag-orange{background:rgba(232,135,90,.15);color:var(--accent2);}
+.pos{color:var(--green);}
+.neg{color:var(--red);}
+
+/* Buttons */
+.btn{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:9px;font-family:'DM Mono',monospace;font-size:11px;cursor:pointer;border:none;transition:all .2s;font-weight:500;}
+.btn-primary{background:var(--accent);color:#fff;}
+.btn-primary:hover{background:#9480ff;transform:translateY(-1px);}
+.btn-outline{background:transparent;color:var(--text);border:1px solid var(--border);}
+.btn-outline:hover{border-color:var(--accent);color:var(--accent);}
+.btn-danger{background:rgba(240,110,122,.12);color:var(--red);border:1px solid rgba(240,110,122,.2);}
+.btn-danger:hover{background:rgba(240,110,122,.22);}
+.btn-sm{padding:5px 11px;font-size:10px;border-radius:7px;}
+.btn-teal{background:rgba(78,205,196,.12);color:var(--accent3);border:1px solid rgba(78,205,196,.2);}
+.btn-teal:hover{background:rgba(78,205,196,.22);}
+
+/* Section Header */
+.section-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
+.section-title{font-family:'Syne',sans-serif;font-size:15px;font-weight:700;}
+
+/* Modal */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);backdrop-filter:blur(4px);z-index:200;align-items:center;justify-content:center;}
+.modal-overlay.open{display:flex;animation:fadeIn .2s ease;}
+.modal{background:var(--surface);border:1px solid var(--border);border-radius:18px;padding:28px;width:520px;max-width:95vw;max-height:90vh;overflow-y:auto;}
+.modal-title{font-family:'Syne',sans-serif;font-size:18px;font-weight:700;margin-bottom:20px;}
+.modal-close{float:right;background:none;border:none;color:var(--muted);font-size:20px;cursor:pointer;margin-top:-3px;}
+.modal-close:hover{color:var(--text);}
+
+/* Form */
+.form-group{margin-bottom:16px;}
+.form-label{font-size:10px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:7px;display:block;}
+.form-input{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:9px;padding:10px 13px;color:var(--text);font-family:'DM Mono',monospace;font-size:12px;transition:border-color .2s;outline:none;appearance:none;}
+.form-input:focus{border-color:var(--accent);}
+select.form-input{cursor:pointer;}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.form-row-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;}
+.form-actions{display:flex;gap:9px;justify-content:flex-end;margin-top:20px;}
+
+/* ══ ADD ASSET WIZARD ══ */
+.wizard-wrap{max-width:760px;margin:0 auto;}
+.wizard-steps{display:flex;align-items:center;gap:0;margin-bottom:32px;}
+.ws{display:flex;align-items:center;gap:0;}
+.ws-circle{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Syne',sans-serif;font-size:13px;font-weight:700;border:2px solid var(--border);color:var(--muted);background:var(--surface);transition:all .3s;flex-shrink:0;}
+.ws-circle.done{background:var(--accent);border-color:var(--accent);color:#fff;}
+.ws-circle.active{border-color:var(--accent);color:var(--accent);}
+.ws-label{font-size:10px;color:var(--muted);margin-left:8px;white-space:nowrap;}
+.ws-label.active{color:var(--text);}
+.ws-line{flex:1;height:1px;background:var(--border);margin:0 12px;min-width:20px;}
+.ws-line.done{background:var(--accent);}
+
+/* Asset type cards */
+.type-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;margin-bottom:8px;}
+.type-card{background:var(--surface);border:2px solid var(--border);border-radius:14px;padding:22px 20px;cursor:pointer;transition:all .25s;position:relative;overflow:hidden;}
+.type-card:hover{transform:translateY(-3px);}
+.type-card.selected{transform:translateY(-3px);}
+.type-card.equity.selected{border-color:var(--equity);background:rgba(124,106,247,.07);}
+.type-card.debt.selected{border-color:var(--debt);background:rgba(78,205,196,.07);}
+.type-card.commodity.selected{border-color:var(--commodity);background:rgba(232,197,90,.07);}
+.type-card.realestate.selected{border-color:var(--realestate);background:rgba(232,135,90,.07);}
+.type-card:hover{border-color:var(--border);}
+.type-card.equity:hover{border-color:var(--equity);}
+.type-card.debt:hover{border-color:var(--debt);}
+.type-card.commodity:hover{border-color:var(--commodity);}
+.type-card.realestate:hover{border-color:var(--realestate);}
+.tc-icon{font-size:32px;margin-bottom:12px;}
+.tc-name{font-family:'Syne',sans-serif;font-size:16px;font-weight:700;margin-bottom:5px;}
+.tc-desc{font-size:11px;color:var(--muted);line-height:1.6;}
+
+/* Subtype pills */
+.subtype-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:8px;}
+.subtype-pill{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px 16px;cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:10px;}
+.subtype-pill:hover{border-color:var(--accent);}
+.subtype-pill.selected{border-color:var(--accent);background:rgba(124,106,247,.08);color:var(--accent);}
+.subtype-pill .sp-icon{font-size:18px;flex-shrink:0;}
+.sp-name{font-size:12px;font-weight:500;}
+.sp-hint{font-size:10px;color:var(--muted);margin-top:2px;}
+
+/* Detail form card */
+.detail-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:26px;}
+.detail-card .type-badge{display:inline-flex;align-items:center;gap:6px;padding:5px 12px;border-radius:7px;font-size:11px;font-weight:500;margin-bottom:18px;}
+
+/* Summary card */
+.summary-card{background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:18px;margin-top:16px;}
+.sc-row{display:flex;justify-content:space-between;align-items:center;padding:6px 0;font-size:12px;}
+.sc-row:not(:last-child){border-bottom:1px solid rgba(37,37,53,.5);}
+.sc-label{color:var(--muted);}
+.sc-val{font-weight:500;}
+
+/* Goals */
+.goals-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:18px;}
+.goal-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:22px;transition:border-color .2s;}
+.goal-card:hover{border-color:var(--accent);}
+.goal-name{font-family:'Syne',sans-serif;font-size:16px;font-weight:700;}
+.goal-target{font-size:11px;color:var(--muted);margin-top:3px;}
+.progress-bar{height:5px;background:var(--surface2);border-radius:99px;overflow:hidden;margin:13px 0 9px;}
+.progress-fill{height:100%;border-radius:99px;background:linear-gradient(90deg,var(--accent),var(--accent3));transition:width .8s cubic-bezier(.4,0,.2,1);}
+.goal-pct{font-family:'Syne',sans-serif;font-size:20px;font-weight:700;color:var(--accent);}
+.linked-assets{margin-top:14px;padding-top:12px;border-top:1px solid var(--border);}
+.linked-label{font-size:9px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:7px;}
+.asset-chip{display:inline-flex;align-items:center;gap:5px;background:rgba(124,106,247,.1);border:1px solid rgba(124,106,247,.2);color:var(--accent);padding:3px 9px;border-radius:5px;font-size:10px;margin:2px 2px 2px 0;}
+.chip-remove{cursor:pointer;opacity:.6;}
+.chip-remove:hover{opacity:1;}
+
+/* Cashflow */
+.summary-row{display:flex;gap:16px;margin-bottom:22px;}
+.summary-item{flex:1;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px 18px;}
+.summary-item-label{font-size:9px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:5px;}
+.summary-item-value{font-family:'Syne',sans-serif;font-size:20px;font-weight:700;}
+
+.tab-row{display:flex;gap:4px;margin-bottom:18px;}
+.tab-btn{padding:7px 14px;border-radius:7px;border:1px solid var(--border);background:none;color:var(--muted);font-family:'DM Mono',monospace;font-size:11px;cursor:pointer;transition:all .2s;}
+.tab-btn.active{background:var(--accent);color:#fff;border-color:var(--accent);}
+.tab-btn:hover:not(.active){color:var(--text);border-color:var(--accent);}
+
+.empty-state{text-align:center;padding:44px 24px;color:var(--muted);}
+.empty-icon{font-size:36px;margin-bottom:10px;}
+.empty-text{font-size:12px;}
+
+::-webkit-scrollbar{width:4px;}
+::-webkit-scrollbar-track{background:var(--bg);}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:99px;}
+
+.divider{height:1px;background:var(--border);margin:20px 0;}
+
+.back-btn{display:inline-flex;align-items:center;gap:6px;color:var(--muted);font-size:11px;cursor:pointer;margin-bottom:20px;transition:color .2s;}
+.back-btn:hover{color:var(--text);}
+</style>
+</head>
+<body>
+
+<!-- Sidebar -->
+<nav class="sidebar">
+  <div class="logo">Wealth<span>wise</span></div>
+  <div class="nav-section">Overview</div>
+  <div class="nav-item active" onclick="navigate('dashboard',this)"><span class="icon">◈</span>Dashboard</div>
+  <div class="nav-section">Portfolio</div>
+  <div class="nav-item" onclick="navigate('assets',this)"><span class="icon">◎</span>Assets</div>
+  <div class="nav-item" onclick="navigate('add-asset',this)"><span class="icon">＋</span>Add Asset</div>
+  <div class="nav-section">Cash Flow</div>
+  <div class="nav-item" onclick="navigate('cashflow',this)"><span class="icon">⇅</span>Income & Expenses</div>
+  <div class="nav-item" onclick="navigate('income',this)"><span class="icon">↑</span>Add Income</div>
+  <div class="nav-item" onclick="navigate('expense',this)"><span class="icon">↓</span>Add Expense</div>
+  <div class="nav-section">Planning</div>
+  <div class="nav-item" onclick="navigate('goals',this)"><span class="icon">◉</span>Goal Tracker</div>
+</nav>
+
+<div class="main">
+  <div class="topbar">
+    <div class="page-title" id="page-title">Dashboard</div>
+    <div style="display:flex;align-items:center;gap:14px;">
+      <div style="font-size:11px;color:var(--muted);" id="topbar-date"></div>
+      <div class="avatar">R</div>
+    </div>
+  </div>
+
+  <!-- ══ DASHBOARD ══ -->
+  <div class="page active" id="page-dashboard">
+    <div class="networth-banner">
+      <div>
+        <div class="networth-label">Total Net Worth</div>
+        <div class="networth-value" id="nw-total">₹0</div>
+        <div style="font-size:11px;color:var(--muted);margin-top:5px;">Assets + Cash Surplus</div>
+      </div>
+      <div style="text-align:right;position:relative;z-index:1;">
+        <div style="font-size:9px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:5px;">Cash Surplus</div>
+        <div id="nw-surplus" style="font-family:'Syne',sans-serif;font-size:22px;font-weight:700;" class="pos">+₹0</div>
+      </div>
+    </div>
+    <div class="stats-grid">
+      <div class="stat-card" onclick="navigate('assets',document.querySelector('[onclick*=assets]'))">
+        <div class="stat-icon">◎</div>
+        <div class="stat-label">Invested Value</div>
+        <div class="stat-value" id="d-invested">₹0</div>
+        <div class="stat-sub">Total cost basis</div>
+        <span class="stat-badge badge-accent" id="d-asset-count">0 assets</span>
+      </div>
+      <div class="stat-card" onclick="navigate('assets',document.querySelector('[onclick*=assets]'))">
+        <div class="stat-icon">📈</div>
+        <div class="stat-label">Current Value</div>
+        <div class="stat-value" id="d-current">₹0</div>
+        <div class="stat-sub">Market value today</div>
+        <span class="stat-badge" id="d-profit-badge">₹0 P&L</span>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">💹</div>
+        <div class="stat-label">Total Profit / Loss</div>
+        <div class="stat-value" id="d-profit">₹0</div>
+        <div class="stat-sub">Unrealised gain/loss</div>
+        <span class="stat-badge" id="d-pct-badge">0%</span>
+      </div>
+      <div class="stat-card" onclick="navigate('income',document.querySelector('[onclick*=income]'))">
+        <div class="stat-icon">↑</div>
+        <div class="stat-label">Total Income</div>
+        <div class="stat-value pos" id="d-income">₹0</div>
+      </div>
+      <div class="stat-card" onclick="navigate('expense',document.querySelector('[onclick*=expense]'))">
+        <div class="stat-icon">↓</div>
+        <div class="stat-label">Total Expenses</div>
+        <div class="stat-value neg" id="d-expenses">₹0</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">⚡</div>
+        <div class="stat-label">Net Cash Flow</div>
+        <div class="stat-value" id="d-cashflow">₹0</div>
+      </div>
+    </div>
+    <div class="section-header">
+      <div class="section-title">Recent Transactions</div>
+      <button class="btn btn-outline btn-sm" onclick="navigate('cashflow',document.querySelector('[onclick*=cashflow]'))">View All</button>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Date</th><th>Description</th><th>Category</th><th>Type</th><th>Amount</th></tr></thead>
+        <tbody id="recent-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ══ ASSETS ══ -->
+  <div class="page" id="page-assets">
+    <div class="section-header">
+      <div>
+        <div class="section-title">Asset Portfolio</div>
+        <div style="font-size:11px;color:var(--muted);margin-top:3px;">All your investments in one place</div>
+      </div>
+      <button class="btn btn-primary" onclick="navigate('add-asset',document.querySelector('[onclick*=add-asset]'))">＋ Add Asset</button>
+    </div>
+    <div class="stats-grid" style="margin-bottom:22px;">
+      <div class="stat-card"><div class="stat-label">Total Invested</div><div class="stat-value" id="a-invested">₹0</div></div>
+      <div class="stat-card"><div class="stat-label">Current Value</div><div class="stat-value" id="a-current">₹0</div></div>
+      <div class="stat-card"><div class="stat-label">P&L</div><div class="stat-value" id="a-pnl">₹0</div><span class="stat-badge" id="a-pnl-badge">0%</span></div>
+    </div>
+    <!-- Category breakdown tabs -->
+    <div class="tab-row" id="asset-tabs">
+      <button class="tab-btn active" onclick="filterAssets('all',this)">All</button>
+      <button class="tab-btn" onclick="filterAssets('Equity',this)">Equity</button>
+      <button class="tab-btn" onclick="filterAssets('Debt',this)">Debt</button>
+      <button class="tab-btn" onclick="filterAssets('Commodity',this)">Commodity</button>
+      <button class="tab-btn" onclick="filterAssets('Real Estate',this)">Real Estate</button>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Asset</th><th>Category</th><th>Subtype</th><th>Qty / Units</th><th>Buy Price</th><th>Current Price</th><th>Invested</th><th>Current Value</th><th>P&L</th><th>Actions</th></tr></thead>
+        <tbody id="assets-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ══ ADD ASSET WIZARD ══ -->
+  <div class="page" id="page-add-asset">
+    <div class="wizard-wrap">
+      <!-- Steps -->
+      <div class="wizard-steps" id="wizard-steps">
+        <div class="ws"><div class="ws-circle active" id="wsc-1">1</div><div class="ws-label active" id="wsl-1">Category</div></div>
+        <div class="ws-line" id="wsl-line-1"></div>
+        <div class="ws"><div class="ws-circle" id="wsc-2">2</div><div class="ws-label" id="wsl-2">Subtype</div></div>
+        <div class="ws-line" id="wsl-line-2"></div>
+        <div class="ws"><div class="ws-circle" id="wsc-3">3</div><div class="ws-label" id="wsl-3">Details</div></div>
+        <div class="ws-line" id="wsl-line-3"></div>
+        <div class="ws"><div class="ws-circle" id="wsc-4">4</div><div class="ws-label" id="wsl-4">Review</div></div>
+      </div>
+
+      <!-- Step 1: Category -->
+      <div id="wizard-step-1">
+        <div style="font-family:'Syne',sans-serif;font-size:20px;font-weight:700;margin-bottom:6px;">What type of asset?</div>
+        <div style="font-size:12px;color:var(--muted);margin-bottom:24px;">Choose the broad asset category to get started</div>
+        <div class="type-grid">
+          <div class="type-card equity" onclick="selectCategory('Equity',this)">
+            <div class="tc-icon">📊</div>
+            <div class="tc-name">Equity</div>
+            <div class="tc-desc">Stocks, mutual funds, ETFs — domestic and international equity markets</div>
+          </div>
+          <div class="type-card debt" onclick="selectCategory('Debt',this)">
+            <div class="tc-icon">🏦</div>
+            <div class="tc-name">Debt</div>
+            <div class="tc-desc">Fixed deposits, recurring deposits, bonds & debt mutual funds</div>
+          </div>
+          <div class="type-card commodity" onclick="selectCategory('Commodity',this)">
+            <div class="tc-icon">🪙</div>
+            <div class="tc-name">Commodity</div>
+            <div class="tc-desc">Physical gold & silver, ETFs, mutual funds, Sovereign Gold Bonds</div>
+          </div>
+          <div class="type-card realestate" onclick="selectCategory('Real Estate',this)">
+            <div class="tc-icon">🏗️</div>
+            <div class="tc-name">Real Estate</div>
+            <div class="tc-desc">Flat / property investments and Real Estate Investment Trusts</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 2: Subtype -->
+      <div id="wizard-step-2" style="display:none;">
+        <div class="back-btn" onclick="goToStep(1)">← Back</div>
+        <div style="font-family:'Syne',sans-serif;font-size:20px;font-weight:700;margin-bottom:6px;" id="subtype-heading">Choose subtype</div>
+        <div style="font-size:12px;color:var(--muted);margin-bottom:20px;" id="subtype-sub">Select the specific instrument</div>
+        <div class="subtype-grid" id="subtype-grid"></div>
+      </div>
+
+      <!-- Step 3: Details -->
+      <div id="wizard-step-3" style="display:none;">
+        <div class="back-btn" onclick="goToStep(2)">← Back</div>
+        <div class="detail-card">
+          <div class="type-badge" id="detail-badge"></div>
+          <div style="font-family:'Syne',sans-serif;font-size:16px;font-weight:700;margin-bottom:18px;" id="detail-heading">Asset Details</div>
+          <div id="detail-form-fields"></div>
+        </div>
+      </div>
+
+      <!-- Step 4: Review -->
+      <div id="wizard-step-4" style="display:none;">
+        <div class="back-btn" onclick="goToStep(3)">← Back</div>
+        <div style="font-family:'Syne',sans-serif;font-size:20px;font-weight:700;margin-bottom:6px;">Review & Confirm</div>
+        <div style="font-size:12px;color:var(--muted);margin-bottom:20px;">Double-check the details before saving</div>
+        <div class="summary-card" id="review-summary"></div>
+        <div style="display:flex;gap:10px;margin-top:20px;">
+          <button class="btn btn-outline" style="flex:1;justify-content:center;" onclick="goToStep(3)">← Edit</button>
+          <button class="btn btn-primary" style="flex:2;justify-content:center;" onclick="confirmAddAsset()">✓ Add Asset</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ CASH FLOW ══ -->
+  <div class="page" id="page-cashflow">
+    <div class="section-header">
+      <div class="section-title">Income & Expenses</div>
+      <div style="display:flex;gap:8px;">
+        <button class="btn btn-outline btn-sm" onclick="navigate('income',document.querySelector('[onclick*=income]'))">＋ Income</button>
+        <button class="btn btn-primary btn-sm" onclick="navigate('expense',document.querySelector('[onclick*=expense]'))">＋ Expense</button>
+      </div>
+    </div>
+    <div class="summary-row">
+      <div class="summary-item"><div class="summary-item-label">Total Income</div><div class="summary-item-value pos" id="cf-income">₹0</div></div>
+      <div class="summary-item"><div class="summary-item-label">Total Expenses</div><div class="summary-item-value neg" id="cf-expenses">₹0</div></div>
+      <div class="summary-item"><div class="summary-item-label">Net</div><div class="summary-item-value" id="cf-net">₹0</div></div>
+    </div>
+    <div class="tab-row">
+      <button class="tab-btn active" onclick="filterCashflow('all',this)">All</button>
+      <button class="tab-btn" onclick="filterCashflow('income',this)">Income</button>
+      <button class="tab-btn" onclick="filterCashflow('expense',this)">Expenses</button>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Date</th><th>Description</th><th>Category</th><th>Type</th><th>Amount</th><th></th></tr></thead>
+        <tbody id="cf-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ══ ADD INCOME ══ -->
+  <div class="page" id="page-income">
+    <div class="section-title" style="margin-bottom:22px;">Add Income</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:22px;align-items:start;">
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:26px;">
+        <div style="font-size:13px;font-weight:600;margin-bottom:18px;font-family:'Syne',sans-serif;">New Income Entry</div>
+        <div class="form-group"><label class="form-label">Description</label><input class="form-input" id="inc-desc" placeholder="e.g. Monthly Salary"></div>
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">Amount (₹)</label><input class="form-input" id="inc-amount" type="number" placeholder="50000"></div>
+          <div class="form-group"><label class="form-label">Date</label><input class="form-input" id="inc-date" type="date"></div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Category</label>
+          <select class="form-input" id="inc-cat">
+            <option>Salary</option><option>Freelance</option><option>Dividend</option>
+            <option>Rental</option><option>Business</option><option>Gift</option><option>Other</option>
+          </select>
+        </div>
+        <div class="form-group"><label class="form-label">Notes</label><input class="form-input" id="inc-notes" placeholder="Optional..."></div>
+        <button class="btn btn-primary" style="width:100%;justify-content:center;" onclick="addIncome()">Add Income</button>
+      </div>
+      <div>
+        <div class="section-header"><div class="section-title">Income History</div></div>
+        <div class="table-wrap"><table><thead><tr><th>Date</th><th>Description</th><th>Category</th><th>Amount</th><th></th></tr></thead><tbody id="income-history"></tbody></table></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ ADD EXPENSE ══ -->
+  <div class="page" id="page-expense">
+    <div class="section-title" style="margin-bottom:22px;">Add Expense</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:22px;align-items:start;">
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:26px;">
+        <div style="font-size:13px;font-weight:600;margin-bottom:18px;font-family:'Syne',sans-serif;">New Expense Entry</div>
+        <div class="form-group"><label class="form-label">Description</label><input class="form-input" id="exp-desc" placeholder="e.g. Grocery Shopping"></div>
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">Amount (₹)</label><input class="form-input" id="exp-amount" type="number" placeholder="2000"></div>
+          <div class="form-group"><label class="form-label">Date</label><input class="form-input" id="exp-date" type="date"></div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Category</label>
+          <select class="form-input" id="exp-cat">
+            <option>Food & Dining</option><option>Housing</option><option>Transport</option>
+            <option>Healthcare</option><option>Entertainment</option><option>Shopping</option>
+            <option>Education</option><option>Utilities</option><option>Insurance</option><option>Other</option>
+          </select>
+        </div>
+        <div class="form-group"><label class="form-label">Notes</label><input class="form-input" id="exp-notes" placeholder="Optional..."></div>
+        <button class="btn btn-primary" style="width:100%;justify-content:center;background:var(--accent2);" onclick="addExpense()">Add Expense</button>
+      </div>
+      <div>
+        <div class="section-header"><div class="section-title">Expense History</div></div>
+        <div class="table-wrap"><table><thead><tr><th>Date</th><th>Description</th><th>Category</th><th>Amount</th><th></th></tr></thead><tbody id="expense-history"></tbody></table></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ GOALS ══ -->
+  <div class="page" id="page-goals">
+    <div class="section-header">
+      <div><div class="section-title">Goal Tracker</div><div style="font-size:11px;color:var(--muted);margin-top:3px;">Link assets to financial goals</div></div>
+      <button class="btn btn-primary" onclick="openModal('modal-add-goal')">＋ Add Goal</button>
+    </div>
+    <div class="goals-grid" id="goals-grid">
+      <div style="grid-column:1/-1"><div class="empty-state"><div class="empty-icon">◉</div><div class="empty-text">No goals yet. Add your first financial goal.</div></div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ MODALS ══ -->
+
+<!-- Edit Asset -->
+<div class="modal-overlay" id="modal-edit-asset">
+  <div class="modal">
+    <div class="modal-title">Edit Asset <button class="modal-close" onclick="closeModal('modal-edit-asset')">×</button></div>
+    <input type="hidden" id="edit-idx">
+    <div class="form-group"><label class="form-label">Asset Name</label><input class="form-input" id="ea-name"></div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label" id="ea-qty-label">Units / Qty</label><input class="form-input" id="ea-units" type="number"></div>
+      <div class="form-group"><label class="form-label" id="ea-buy-label">Buy Price (₹)</label><input class="form-input" id="ea-buy" type="number"></div>
+    </div>
+    <div class="form-group"><label class="form-label" id="ea-cur-label">Current Price (₹)</label><input class="form-input" id="ea-cur" type="number"></div>
+    <div class="form-actions">
+      <button class="btn btn-outline" onclick="closeModal('modal-edit-asset')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveEditAsset()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- Sell Asset -->
+<div class="modal-overlay" id="modal-sell-asset">
+  <div class="modal">
+    <div class="modal-title">Sell Asset <button class="modal-close" onclick="closeModal('modal-sell-asset')">×</button></div>
+    <input type="hidden" id="sell-idx">
+    <div id="sell-info" style="background:var(--surface2);border-radius:9px;padding:13px;margin-bottom:18px;font-size:12px;"></div>
+    <div class="form-group"><label class="form-label" id="sell-units-label">Units to Sell</label><input class="form-input" id="sell-units" type="number"></div>
+    <div class="form-group"><label class="form-label" id="sell-price-label">Sell Price per Unit (₹)</label><input class="form-input" id="sell-price" type="number"></div>
+    <div class="form-actions">
+      <button class="btn btn-outline" onclick="closeModal('modal-sell-asset')">Cancel</button>
+      <button class="btn btn-danger" onclick="confirmSell()">Confirm Sell</button>
+    </div>
+  </div>
+</div>
+
+<!-- Add Goal -->
+<div class="modal-overlay" id="modal-add-goal">
+  <div class="modal">
+    <div class="modal-title">Add Goal <button class="modal-close" onclick="closeModal('modal-add-goal')">×</button></div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Emoji</label><input class="form-input" id="g-emoji" placeholder="🎯" maxlength="2"></div>
+      <div class="form-group"><label class="form-label">Goal Name</label><input class="form-input" id="g-name" placeholder="e.g. Retirement Fund"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Target Amount (₹)</label><input class="form-input" id="g-target" type="number" placeholder="5000000"></div>
+      <div class="form-group"><label class="form-label">Target Date</label><input class="form-input" id="g-date" type="date"></div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Link Assets</label>
+      <div id="goal-asset-list" style="max-height:150px;overflow-y:auto;background:var(--surface2);border-radius:9px;padding:10px;"></div>
+    </div>
+    <div class="form-actions">
+      <button class="btn btn-outline" onclick="closeModal('modal-add-goal')">Cancel</button>
+      <button class="btn btn-primary" onclick="addGoal()">Add Goal</button>
+    </div>
+  </div>
+</div>
+
+<!-- Link Assets -->
+<div class="modal-overlay" id="modal-link-assets">
+  <div class="modal">
+    <div class="modal-title">Link Assets <button class="modal-close" onclick="closeModal('modal-link-assets')">×</button></div>
+    <input type="hidden" id="link-gi">
+    <div id="link-asset-list" style="max-height:260px;overflow-y:auto;background:var(--surface2);border-radius:9px;padding:10px;"></div>
+    <div class="form-actions">
+      <button class="btn btn-outline" onclick="closeModal('modal-link-assets')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveLinkAssets()">Save</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ══ STATE ══
+let assets      = JSON.parse(localStorage.getItem('ww_assets2') || '[]');
+let transactions= JSON.parse(localStorage.getItem('ww_txns2')   || '[]');
+let goals       = JSON.parse(localStorage.getItem('ww_goals2')  || '[]');
+function save(){
+  localStorage.setItem('ww_assets2', JSON.stringify(assets));
+  localStorage.setItem('ww_txns2',   JSON.stringify(transactions));
+  localStorage.setItem('ww_goals2',  JSON.stringify(goals));
+}
+
+const fmt = n => '₹' + Number(n||0).toLocaleString('en-IN',{maximumFractionDigits:2});
+const fmtRaw = n => Number(n||0).toLocaleString('en-IN',{maximumFractionDigits:4});
+
+// ══ ASSET CONFIG ══
+const ASSET_CONFIG = {
+  Equity: {
+    color:'var(--equity)', tagClass:'tag-equity',
+    subtypes: [
+      { key:'indian-direct-shares', icon:'🇮🇳', name:'Indian Direct Shares', hint:'NSE / BSE listed equities', hasUnits:true },
+      { key:'overseas-equity',      icon:'🌐', name:'Overseas Equity',       hint:'US, global stocks',         hasUnits:true },
+      { key:'indian-eq-mf',         icon:'📦', name:'Indian Equity Mutual Funds', hint:'NIFTY / SENSEX funds', hasUnits:true },
+      { key:'overseas-mf',          icon:'🌍', name:'Overseas Mutual Funds', hint:'International MFs',          hasUnits:true },
+      { key:'etf',                  icon:'📊', name:'ETF',                   hint:'Exchange Traded Funds',      hasUnits:true },
+    ]
+  },
+  Debt: {
+    color:'var(--debt)', tagClass:'tag-debt',
+    subtypes: [
+      { key:'bank-fd',  icon:'🏦', name:'Bank FD',            hint:'Fixed Deposit',        hasUnits:false },
+      { key:'mis',      icon:'📬', name:'Monthly Income Scheme',hint:'Post Office MIS',     hasUnits:false },
+      { key:'rd',       icon:'🔄', name:'Recurring Deposit',   hint:'Monthly RD',           hasUnits:false },
+      { key:'debt-mf',  icon:'📋', name:'Debt Mutual Fund',    hint:'Liquid, gilt, credit risk funds', hasUnits:true },
+    ]
+  },
+  Commodity: {
+    color:'var(--commodity)', tagClass:'tag-commodity',
+    subtypes: [
+      { key:'phys-gold',  icon:'🥇', name:'Physical Gold',       hint:'Measured in grams',          hasUnits:true,  unit:'g',   unitLabel:'Grams',     priceLabel:'Price per gram (₹)' },
+      { key:'gold-etf',   icon:'📊', name:'Gold ETF',             hint:'Exchange Traded Fund (units)',hasUnits:true,  unit:'units', unitLabel:'Units',   priceLabel:'Price per unit (₹)' },
+      { key:'gold-mf',    icon:'📦', name:'Gold Mutual Fund',     hint:'Units in fund',              hasUnits:true,  unit:'units', unitLabel:'Units',   priceLabel:'NAV per unit (₹)' },
+      { key:'sgb',        icon:'📜', name:'Gold SGB',             hint:'Sovereign Gold Bond (grams)',hasUnits:true,  unit:'g',   unitLabel:'Grams (SGB)',priceLabel:'Issue price per gram (₹)' },
+      { key:'phys-silver',icon:'🥈', name:'Physical Silver',      hint:'Measured in grams',          hasUnits:true,  unit:'g',   unitLabel:'Grams',     priceLabel:'Price per gram (₹)' },
+      { key:'silver-etf', icon:'📊', name:'Silver ETF',           hint:'Exchange Traded Fund (units)',hasUnits:true,  unit:'units', unitLabel:'Units',   priceLabel:'Price per unit (₹)' },
+      { key:'silver-mf',  icon:'📦', name:'Silver Mutual Fund',   hint:'Units in fund',              hasUnits:true,  unit:'units', unitLabel:'Units',   priceLabel:'NAV per unit (₹)' },
+    ]
+  },
+  'Real Estate': {
+    color:'var(--realestate)', tagClass:'tag-realestate',
+    subtypes: [
+      { key:'flat',  icon:'🏢', name:'Flat / Property', hint:'Measured in sq. feet',  hasUnits:false, isProperty:true },
+      { key:'reit',  icon:'🏗️', name:'REIT',            hint:'Real Estate Investment Trust (units)', hasUnits:true },
+    ]
+  }
+};
+
+function getSubtype(cat, key){
+  return ASSET_CONFIG[cat]?.subtypes.find(s=>s.key===key);
+}
+
+// ══ WIZARD STATE ══
+let wiz = { step:1, category:'', subtype:'' };
+
+function selectCategory(cat, el){
+  document.querySelectorAll('.type-card').forEach(c=>c.classList.remove('selected'));
+  el.classList.add('selected');
+  wiz.category = cat;
+  setTimeout(()=>goToStep(2), 220);
+}
+
+function selectSubtype(key, el){
+  document.querySelectorAll('.subtype-pill').forEach(p=>p.classList.remove('selected'));
+  el.classList.add('selected');
+  wiz.subtype = key;
+  setTimeout(()=>goToStep(3), 220);
+}
+
+function goToStep(n){
+  [1,2,3,4].forEach(i=>{
+    document.getElementById('wizard-step-'+i).style.display = i===n?'block':'none';
+    const c = document.getElementById('wsc-'+i);
+    c.classList.remove('done','active');
+    const l = document.getElementById('wsl-'+i);
+    l.classList.remove('active');
+    if(i<n){ c.classList.add('done'); c.textContent='✓'; }
+    else if(i===n){ c.classList.add('active'); c.textContent=i; l.classList.add('active'); }
+    else { c.textContent=i; }
+    if(i<4){ const line=document.getElementById('wsl-line-'+i); line.classList.toggle('done',i<n); }
+  });
+  wiz.step = n;
+  if(n===2) buildSubtypeGrid();
+  if(n===3) buildDetailForm();
+  if(n===4) buildReview();
+}
+
+function buildSubtypeGrid(){
+  const cfg = ASSET_CONFIG[wiz.category];
+  document.getElementById('subtype-heading').textContent = wiz.category + ' — Choose Subtype';
+  document.getElementById('subtype-sub').textContent = 'Select the specific instrument type';
+  const grid = document.getElementById('subtype-grid');
+  grid.innerHTML = cfg.subtypes.map(s=>`
+    <div class="subtype-pill ${s.key===wiz.subtype?'selected':''}" onclick="selectSubtype('${s.key}',this)">
+      <span class="sp-icon">${s.icon}</span>
+      <div><div class="sp-name">${s.name}</div><div class="sp-hint">${s.hint}</div></div>
+    </div>`).join('');
+}
+
+function buildDetailForm(){
+  const cfg = ASSET_CONFIG[wiz.category];
+  const st  = getSubtype(wiz.category, wiz.subtype);
+  // badge
+  const badge = document.getElementById('detail-badge');
+  const colors = {Equity:'rgba(124,106,247,.15)',Debt:'rgba(78,205,196,.15)',Commodity:'rgba(232,197,90,.15)','Real Estate':'rgba(232,135,90,.15)'};
+  const textc  = {Equity:'var(--equity)',Debt:'var(--debt)',Commodity:'var(--commodity)','Real Estate':'var(--realestate)'};
+  badge.style.background = colors[wiz.category];
+  badge.style.color = textc[wiz.category];
+  badge.innerHTML = `${st.icon} ${wiz.category} — ${st.name}`;
+  document.getElementById('detail-heading').textContent = st.name + ' Details';
+
+  let html = '';
+
+  // Name field
+  html += `<div class="form-group"><label class="form-label">Asset / Instrument Name</label>
+    <input class="form-input" id="df-name" placeholder="${
+      st.isProperty ? 'e.g. Brigade Orchards 3BHK' :
+      wiz.category==='Debt' ? 'e.g. SBI FD — Apr 2025' :
+      'e.g. Reliance Industries'
+    }"></div>`;
+
+  // Property fields
+  if(st.isProperty){
+    html += `<div class="form-row">
+      <div class="form-group"><label class="form-label">Area (sq. feet)</label><input class="form-input" id="df-sqft" type="number" placeholder="1200"></div>
+      <div class="form-group"><label class="form-label">Purchase Value (₹)</label><input class="form-input" id="df-buy-val" type="number" placeholder="8500000"></div>
+    </div>
+    <div class="form-group"><label class="form-label">Current Market Value (₹)</label><input class="form-input" id="df-cur-val" type="number" placeholder="9500000"></div>`;
+  }
+
+  // Units-based fields
+  if(st.hasUnits){
+    const unitLbl   = st.unitLabel || 'Units / Qty';
+    const buyLbl    = st.priceLabel || 'Buy Price per unit (₹)';
+    const curLbl    = st.unit === 'g' ? 'Current Price per gram (₹)' : (st.priceLabel ? 'Current '+st.priceLabel : 'Current Price per unit (₹)');
+    html += `<div class="form-row">
+      <div class="form-group"><label class="form-label">${unitLbl}</label><input class="form-input" id="df-units" type="number" placeholder="${st.unit==='g'?'50':'100'}"></div>
+      <div class="form-group"><label class="form-label">${buyLbl}</label><input class="form-input" id="df-buy" type="number" placeholder="${st.unit==='g'?'6500':'150'}"></div>
+    </div>
+    <div class="form-group"><label class="form-label">${curLbl}</label><input class="form-input" id="df-cur" type="number" placeholder="Current market price"></div>`;
+  }
+
+  // Debt-specific (no units)
+  if(wiz.category==='Debt' && !st.hasUnits){
+    html += `<div class="form-row">
+      <div class="form-group"><label class="form-label">Principal Amount (₹)</label><input class="form-input" id="df-principal" type="number" placeholder="100000"></div>
+      <div class="form-group"><label class="form-label">Interest Rate (%)</label><input class="form-input" id="df-rate" type="number" placeholder="7.5" step="0.1"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Tenure (months)</label><input class="form-input" id="df-tenure" type="number" placeholder="12"></div>
+      <div class="form-group"><label class="form-label">Current Value (₹)</label><input class="form-input" id="df-cur-debt" type="number" placeholder="Leave blank to auto-calc"></div>
+    </div>`;
+  }
+
+  // Common: Date
+  html += `<div class="form-row">
+    <div class="form-group"><label class="form-label">Purchase Date</label><input class="form-input" id="df-date" type="date" value="${new Date().toISOString().split('T')[0]}"></div>
+    <div class="form-group"><label class="form-label">Notes (optional)</label><input class="form-input" id="df-notes" placeholder="Broker, folio no..."></div>
+  </div>`;
+
+  html += `<div class="form-actions" style="margin-top:16px;padding-top:0;">
+    <button class="btn btn-primary" style="flex:1;justify-content:center;" onclick="gatherAndReview()">Review →</button>
+  </div>`;
+
+  document.getElementById('detail-form-fields').innerHTML = html;
+}
+
+// Gather form data and go to review
+function gatherAndReview(){
+  const st = getSubtype(wiz.category, wiz.subtype);
+  const name = (document.getElementById('df-name')?.value||'').trim();
+  if(!name){ alert('Please enter an asset name.'); return; }
+
+  wiz.formData = { name };
+
+  if(st.isProperty){
+    const sqft   = parseFloat(document.getElementById('df-sqft')?.value)||0;
+    const buyVal = parseFloat(document.getElementById('df-buy-val')?.value)||0;
+    const curVal = parseFloat(document.getElementById('df-cur-val')?.value)||buyVal;
+    if(!sqft||!buyVal){ alert('Please enter area and purchase value.'); return; }
+    Object.assign(wiz.formData, { sqft, buyVal, curVal, units:sqft, buy:buyVal/sqft, cur:curVal/sqft });
+  } else if(st.hasUnits){
+    const units = parseFloat(document.getElementById('df-units')?.value)||0;
+    const buy   = parseFloat(document.getElementById('df-buy')?.value)||0;
+    const cur   = parseFloat(document.getElementById('df-cur')?.value)||buy;
+    if(!units||!buy){ alert('Please enter units and buy price.'); return; }
+    Object.assign(wiz.formData, { units, buy, cur });
+  } else if(wiz.category==='Debt'){
+    const principal = parseFloat(document.getElementById('df-principal')?.value)||0;
+    const rate      = parseFloat(document.getElementById('df-rate')?.value)||0;
+    const tenure    = parseFloat(document.getElementById('df-tenure')?.value)||0;
+    let   curDebt   = parseFloat(document.getElementById('df-cur-debt')?.value)||0;
+    if(!principal){ alert('Please enter principal amount.'); return; }
+    if(!curDebt && rate && tenure){
+      curDebt = principal * Math.pow(1 + (rate/100/12), tenure);
+    }
+    Object.assign(wiz.formData, { principal, rate, tenure, units:1, buy:principal, cur:curDebt||principal });
+  }
+
+  wiz.formData.date  = document.getElementById('df-date')?.value || new Date().toISOString().split('T')[0];
+  wiz.formData.notes = document.getElementById('df-notes')?.value || '';
+  goToStep(4);
+}
+
+function buildReview(){
+  const st = getSubtype(wiz.category, wiz.subtype);
+  const d  = wiz.formData;
+  const invested = d.units * d.buy;
+  const current  = d.units * d.cur;
+  const pnl      = current - invested;
+
+  let rows = `
+    <div class="sc-row"><span class="sc-label">Asset Name</span><span class="sc-val">${d.name}</span></div>
+    <div class="sc-row"><span class="sc-label">Category</span><span class="sc-val">${wiz.category}</span></div>
+    <div class="sc-row"><span class="sc-label">Subtype</span><span class="sc-val">${st.icon} ${st.name}</span></div>`;
+
+  if(st.isProperty){
+    rows += `
+      <div class="sc-row"><span class="sc-label">Area</span><span class="sc-val">${fmtRaw(d.sqft)} sq. ft.</span></div>
+      <div class="sc-row"><span class="sc-label">Purchase Value</span><span class="sc-val">${fmt(d.buyVal)}</span></div>
+      <div class="sc-row"><span class="sc-label">Current Market Value</span><span class="sc-val">${fmt(d.curVal)}</span></div>`;
+  } else if(st.hasUnits){
+    const unitDisp = st.unit==='g' ? 'g' : 'units';
+    rows += `
+      <div class="sc-row"><span class="sc-label">${st.unitLabel||'Units'}</span><span class="sc-val">${fmtRaw(d.units)} ${unitDisp}</span></div>
+      <div class="sc-row"><span class="sc-label">Buy Price</span><span class="sc-val">${fmt(d.buy)} / ${unitDisp}</span></div>
+      <div class="sc-row"><span class="sc-label">Current Price</span><span class="sc-val">${fmt(d.cur)} / ${unitDisp}</span></div>`;
+  } else {
+    rows += `
+      <div class="sc-row"><span class="sc-label">Principal</span><span class="sc-val">${fmt(d.principal)}</span></div>
+      <div class="sc-row"><span class="sc-label">Rate</span><span class="sc-val">${d.rate}% p.a.</span></div>
+      <div class="sc-row"><span class="sc-label">Tenure</span><span class="sc-val">${d.tenure} months</span></div>`;
+  }
+
+  rows += `
+    <div class="sc-row"><span class="sc-label">Date</span><span class="sc-val">${d.date}</span></div>
+    <div class="sc-row"><span class="sc-label">Invested</span><span class="sc-val" style="font-family:'Syne',sans-serif;font-size:15px;">${fmt(invested)}</span></div>
+    <div class="sc-row"><span class="sc-label">Current Value</span><span class="sc-val" style="font-family:'Syne',sans-serif;font-size:15px;">${fmt(current)}</span></div>
+    <div class="sc-row"><span class="sc-label">P&L</span><span class="sc-val ${pnl>=0?'pos':'neg'}" style="font-family:'Syne',sans-serif;font-size:15px;">${pnl>=0?'+':''}${fmt(pnl)}</span></div>`;
+
+  document.getElementById('review-summary').innerHTML = rows;
+}
+
+function confirmAddAsset(){
+  const st = getSubtype(wiz.category, wiz.subtype);
+  const d  = wiz.formData;
+  assets.push({
+    id: Date.now(),
+    name: d.name,
+    category: wiz.category,
+    subtypeKey: wiz.subtype,
+    subtypeName: st.name,
+    subtypeIcon: st.icon,
+    units: d.units,
+    buy: d.buy,
+    cur: d.cur,
+    date: d.date,
+    notes: d.notes,
+    isProperty: !!st.isProperty,
+    sqft: d.sqft||null,
+    unit: st.unit||'units',
+    unitLabel: st.unitLabel||'Units',
+    principal: d.principal||null,
+    rate: d.rate||null,
+    tenure: d.tenure||null,
+  });
+  save();
+  // Reset wizard
+  wiz = { step:1, category:'', subtype:'', formData:{} };
+  goToStep(1);
+  document.querySelectorAll('.type-card').forEach(c=>c.classList.remove('selected'));
+  navigate('assets', document.querySelector('[onclick*="assets,"]'));
+  renderDashboard();
+}
+
+// ══ ASSETS RENDER ══
+let assetFilter = 'all';
+function filterAssets(f, btn){
+  assetFilter = f;
+  document.querySelectorAll('#asset-tabs .tab-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  renderAssets();
+}
+
+function renderAssets(){
+  const list = assetFilter==='all' ? assets : assets.filter(a=>a.category===assetFilter);
+  let totInv=0, totCur=0;
+  assets.forEach(a=>{ totInv+=a.units*a.buy; totCur+=a.units*a.cur; });
+
+  document.getElementById('a-invested').textContent = fmt(totInv);
+  document.getElementById('a-current').textContent  = fmt(totCur);
+  const apnl = totCur-totInv;
+  const apnlEl = document.getElementById('a-pnl');
+  apnlEl.textContent = (apnl>=0?'+':'')+fmt(apnl);
+  apnlEl.className = 'stat-value '+(apnl>=0?'pos':'neg');
+  const ab = document.getElementById('a-pnl-badge');
+  const ap = totInv ? ((apnl/totInv)*100).toFixed(1):0;
+  ab.textContent = (apnl>=0?'+':'')+ap+'%';
+  ab.className = 'stat-badge '+(apnl>=0?'badge-green':'badge-red');
+
+  const tbody = document.getElementById('assets-tbody');
+  if(!list.length){
+    tbody.innerHTML=`<tr><td colspan="10"><div class="empty-state"><div class="empty-icon">◎</div><div class="empty-text">No assets${assetFilter!=='all'?' in this category':''} yet.</div></div></td></tr>`;
+    return;
+  }
+
+  const catTag = {Equity:'tag-equity',Debt:'tag-debt',Commodity:'tag-commodity','Real Estate':'tag-realestate'};
+
+  tbody.innerHTML = list.map((a,idx)=>{
+    const realIdx = assets.indexOf(a);
+    const inv = a.units * a.buy;
+    const cur = a.units * a.cur;
+    const pnl = cur - inv;
+    const pp  = inv ? ((pnl/inv)*100).toFixed(1):0;
+    const qtyDisp = a.isProperty ? `${fmtRaw(a.sqft)} sq.ft` : `${fmtRaw(a.units)} ${a.unit||'units'}`;
+    const buyDisp = a.isProperty ? fmt(a.buy*a.sqft) : fmt(a.buy)+`/${a.unit||'u'}`;
+    const curDisp = a.isProperty ? fmt(a.cur*a.sqft) : fmt(a.cur)+`/${a.unit||'u'}`;
+    return `<tr>
+      <td><div style="font-weight:500;">${a.subtypeIcon||''} ${a.name}</div><div style="font-size:10px;color:var(--muted);">${a.date||''}</div></td>
+      <td><span class="tag ${catTag[a.category]||'tag-blue'}">${a.category}</span></td>
+      <td style="font-size:11px;color:var(--muted);">${a.subtypeName}</td>
+      <td>${qtyDisp}</td>
+      <td>${buyDisp}</td>
+      <td>${curDisp}</td>
+      <td>${fmt(inv)}</td>
+      <td>${fmt(cur)}</td>
+      <td class="${pnl>=0?'pos':'neg'}">${pnl>=0?'+':''}${fmt(pnl)}<div style="font-size:10px;">${pnl>=0?'+':''}${pp}%</div></td>
+      <td><div style="display:flex;gap:5px;">
+        <button class="btn btn-outline btn-sm" onclick="openEditAsset(${realIdx})">Edit</button>
+        <button class="btn btn-teal btn-sm" onclick="openSellAsset(${realIdx})">Sell</button>
+      </div></td>
+    </tr>`;
+  }).join('');
+}
+
+function openEditAsset(i){
+  const a = assets[i];
+  document.getElementById('edit-idx').value = i;
+  document.getElementById('ea-name').value  = a.name;
+  document.getElementById('ea-units').value = a.units;
+  document.getElementById('ea-buy').value   = a.buy;
+  document.getElementById('ea-cur').value   = a.cur;
+  const lbl = a.unit==='g' ? 'Grams' : (a.isProperty?'Sq. Feet':'Units');
+  document.getElementById('ea-qty-label').textContent  = lbl;
+  document.getElementById('ea-buy-label').textContent  = a.isProperty?'Buy Price per sq.ft (₹)':'Buy Price per unit (₹)';
+  document.getElementById('ea-cur-label').textContent  = a.isProperty?'Current Price per sq.ft (₹)':'Current Price per unit (₹)';
+  openModal('modal-edit-asset');
+}
+function saveEditAsset(){
+  const i = document.getElementById('edit-idx').value;
+  assets[i].name  = document.getElementById('ea-name').value;
+  assets[i].units = parseFloat(document.getElementById('ea-units').value)||0;
+  assets[i].buy   = parseFloat(document.getElementById('ea-buy').value)||0;
+  assets[i].cur   = parseFloat(document.getElementById('ea-cur').value)||0;
+  save(); closeModal('modal-edit-asset'); renderAssets(); renderDashboard();
+}
+
+function openSellAsset(i){
+  const a = assets[i];
+  document.getElementById('sell-idx').value = i;
+  document.getElementById('sell-info').innerHTML = `<strong>${a.subtypeIcon} ${a.name}</strong> &nbsp;|&nbsp; ${fmtRaw(a.units)} ${a.unit||'units'} available &nbsp;|&nbsp; Current: ${fmt(a.cur)}`;
+  document.getElementById('sell-price').value = a.cur;
+  document.getElementById('sell-units').value = '';
+  document.getElementById('sell-units-label').textContent = a.unit==='g'?'Grams to Sell':'Units to Sell';
+  document.getElementById('sell-price-label').textContent = a.unit==='g'?'Sell Price per gram (₹)':'Sell Price per unit (₹)';
+  openModal('modal-sell-asset');
+}
+function confirmSell(){
+  const i     = parseInt(document.getElementById('sell-idx').value);
+  const units = parseFloat(document.getElementById('sell-units').value)||0;
+  const price = parseFloat(document.getElementById('sell-price').value)||0;
+  const a = assets[i];
+  if(!units||units>a.units) return alert('Invalid quantity.');
+  const proceeds = units*price, cost = units*a.buy;
+  transactions.push({ date:new Date().toISOString().split('T')[0], desc:`Sold ${fmtRaw(units)} ${a.unit||'units'} of ${a.name}`, cat:'Investment Sale', type:'income', amount:proceeds, id:Date.now() });
+  if(units>=a.units) assets.splice(i,1); else assets[i].units -= units;
+  save(); closeModal('modal-sell-asset'); renderAssets(); renderDashboard();
+  alert(`Sold for ${fmt(proceeds)}.  P&L on this sale: ${fmt(proceeds-cost)}`);
+}
+
+// ══ TRANSACTIONS ══
+function addIncome(){
+  const desc=document.getElementById('inc-desc').value.trim();
+  const amount=parseFloat(document.getElementById('inc-amount').value)||0;
+  const date=document.getElementById('inc-date').value||today();
+  const cat=document.getElementById('inc-cat').value;
+  const notes=document.getElementById('inc-notes').value;
+  if(!desc||!amount) return alert('Fill description and amount.');
+  transactions.push({date,desc,cat,type:'income',amount,notes,id:Date.now()});
+  save();
+  ['inc-desc','inc-amount','inc-notes'].forEach(id=>document.getElementById(id).value='');
+  renderIncomeHistory(); renderDashboard();
+}
+function addExpense(){
+  const desc=document.getElementById('exp-desc').value.trim();
+  const amount=parseFloat(document.getElementById('exp-amount').value)||0;
+  const date=document.getElementById('exp-date').value||today();
+  const cat=document.getElementById('exp-cat').value;
+  const notes=document.getElementById('exp-notes').value;
+  if(!desc||!amount) return alert('Fill description and amount.');
+  transactions.push({date,desc,cat,type:'expense',amount,notes,id:Date.now()});
+  save();
+  ['exp-desc','exp-amount','exp-notes'].forEach(id=>document.getElementById(id).value='');
+  renderExpenseHistory(); renderDashboard();
+}
+function deleteTxn(id){
+  if(!confirm('Delete this transaction?')) return;
+  transactions=transactions.filter(t=>t.id!==id);
+  save(); renderDashboard(); renderCashflow(); renderIncomeHistory(); renderExpenseHistory();
+}
+
+function renderIncomeHistory(){
+  const tbody=document.getElementById('income-history');
+  const inc=[...transactions].filter(t=>t.type==='income').sort((a,b)=>b.date.localeCompare(a.date));
+  if(!inc.length){tbody.innerHTML=`<tr><td colspan="5"><div class="empty-state"><div class="empty-icon">↑</div><div class="empty-text">No income yet.</div></div></td></tr>`;return;}
+  tbody.innerHTML=inc.map(t=>`<tr><td>${t.date}</td><td>${t.desc}</td><td><span class="tag tag-green">${t.cat}</span></td><td class="pos">${fmt(t.amount)}</td><td><button class="btn btn-danger btn-sm" onclick="deleteTxn(${t.id})">✕</button></td></tr>`).join('');
+}
+function renderExpenseHistory(){
+  const tbody=document.getElementById('expense-history');
+  const exp=[...transactions].filter(t=>t.type==='expense').sort((a,b)=>b.date.localeCompare(a.date));
+  if(!exp.length){tbody.innerHTML=`<tr><td colspan="5"><div class="empty-state"><div class="empty-icon">↓</div><div class="empty-text">No expenses yet.</div></div></td></tr>`;return;}
+  tbody.innerHTML=exp.map(t=>`<tr><td>${t.date}</td><td>${t.desc}</td><td><span class="tag tag-orange">${t.cat}</span></td><td class="neg">${fmt(t.amount)}</td><td><button class="btn btn-danger btn-sm" onclick="deleteTxn(${t.id})">✕</button></td></tr>`).join('');
+}
+
+let cfFilter='all';
+function filterCashflow(f,btn){
+  cfFilter=f;
+  document.querySelectorAll('.tab-row .tab-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  renderCashflow();
+}
+function renderCashflow(){
+  const inc=transactions.filter(t=>t.type==='income').reduce((s,t)=>s+t.amount,0);
+  const exp=transactions.filter(t=>t.type==='expense').reduce((s,t)=>s+t.amount,0);
+  document.getElementById('cf-income').textContent=fmt(inc);
+  document.getElementById('cf-expenses').textContent=fmt(exp);
+  const netEl=document.getElementById('cf-net'); const net=inc-exp;
+  netEl.textContent=(net>=0?'+':'')+fmt(net);
+  netEl.className='summary-item-value '+(net>=0?'pos':'neg');
+  const list=[...transactions].filter(t=>cfFilter==='all'||t.type===cfFilter).sort((a,b)=>b.date.localeCompare(a.date));
+  const tbody=document.getElementById('cf-tbody');
+  if(!list.length){tbody.innerHTML=`<tr><td colspan="6"><div class="empty-state"><div class="empty-icon">⇅</div><div class="empty-text">No transactions.</div></div></td></tr>`;return;}
+  tbody.innerHTML=list.map(t=>`<tr>
+    <td>${t.date}</td><td>${t.desc}</td>
+    <td><span class="tag ${t.type==='income'?'tag-green':'tag-orange'}">${t.cat}</span></td>
+    <td><span class="tag ${t.type==='income'?'tag-green':'tag-red'}">${t.type==='income'?'Income':'Expense'}</span></td>
+    <td class="${t.type==='income'?'pos':'neg'}">${t.type==='income'?'+':'-'}${fmt(t.amount)}</td>
+    <td><button class="btn btn-danger btn-sm" onclick="deleteTxn(${t.id})">✕</button></td>
+  </tr>`).join('');
+}
+
+// ══ DASHBOARD ══
+function renderDashboard(){
+  const totInv=assets.reduce((s,a)=>s+a.units*a.buy,0);
+  const totCur=assets.reduce((s,a)=>s+a.units*a.cur,0);
+  const profit=totCur-totInv;
+  const totInc=transactions.filter(t=>t.type==='income').reduce((s,t)=>s+t.amount,0);
+  const totExp=transactions.filter(t=>t.type==='expense').reduce((s,t)=>s+t.amount,0);
+  const surplus=totInc-totExp;
+  const netWorth=totCur+surplus;
+
+  document.getElementById('nw-total').textContent=fmt(netWorth);
+  const surplusEl=document.getElementById('nw-surplus');
+  surplusEl.textContent=(surplus>=0?'+':'')+fmt(surplus);
+  surplusEl.className=surplus>=0?'pos':'neg';
+
+  document.getElementById('d-invested').textContent=fmt(totInv);
+  document.getElementById('d-current').textContent=fmt(totCur);
+  const pEl=document.getElementById('d-profit');
+  pEl.textContent=(profit>=0?'+':'')+fmt(profit);
+  pEl.className='stat-value '+(profit>=0?'pos':'neg');
+
+  const pb=document.getElementById('d-profit-badge');
+  pb.textContent=(profit>=0?'+':'')+fmt(profit)+' P&L';
+  pb.className='stat-badge '+(profit>=0?'badge-green':'badge-red');
+
+  const ppb=document.getElementById('d-pct-badge');
+  const pp=totInv?((profit/totInv)*100).toFixed(1):0;
+  ppb.textContent=(profit>=0?'+':'')+pp+'%';
+  ppb.className='stat-badge '+(profit>=0?'badge-green':'badge-red');
+
+  document.getElementById('d-income').textContent=fmt(totInc);
+  document.getElementById('d-expenses').textContent=fmt(totExp);
+  document.getElementById('d-asset-count').textContent=assets.length+' assets';
+
+  const cfEl=document.getElementById('d-cashflow');
+  cfEl.textContent=(surplus>=0?'+':'')+fmt(surplus);
+  cfEl.className='stat-value '+(surplus>=0?'pos':'neg');
+
+  const recent=[...transactions].sort((a,b)=>b.date.localeCompare(a.date)).slice(0,6);
+  const tbody=document.getElementById('recent-tbody');
+  if(!recent.length){tbody.innerHTML=`<tr><td colspan="5"><div class="empty-state"><div class="empty-icon">📋</div><div class="empty-text">No transactions yet.</div></div></td></tr>`;return;}
+  tbody.innerHTML=recent.map(t=>`<tr>
+    <td>${t.date}</td><td>${t.desc}</td>
+    <td><span class="tag ${t.type==='income'?'tag-green':'tag-orange'}">${t.cat}</span></td>
+    <td><span class="tag ${t.type==='income'?'tag-green':'tag-red'}">${t.type==='income'?'Income':'Expense'}</span></td>
+    <td class="${t.type==='income'?'pos':'neg'}">${t.type==='income'?'+':'-'}${fmt(t.amount)}</td>
+  </tr>`).join('');
+}
+
+// ══ GOALS ══
+function buildGoalAssetList(containerId, goalIdx){
+  const el=document.getElementById(containerId);
+  if(!assets.length){el.innerHTML='<div style="color:var(--muted);font-size:11px;">No assets yet. Add assets first.</div>';return;}
+  const linked=goalIdx!==null?(goals[goalIdx]?.linkedAssets||[]):[];
+  el.innerHTML=assets.map((a,i)=>`
+    <label style="display:flex;align-items:center;gap:9px;padding:7px;cursor:pointer;border-radius:7px;transition:background .15s;" onmouseover="this.style.background='var(--surface)'" onmouseout="this.style.background='none'">
+      <input type="checkbox" value="${i}" ${linked.includes(i)?'checked':''} style="accent-color:var(--accent);">
+      <span style="font-size:12px;">${a.subtypeIcon||''} ${a.name}</span>
+      <span class="tag tag-blue" style="margin-left:auto;font-size:9px;">${a.subtypeName}</span>
+      <span style="font-size:11px;color:var(--accent);">${fmt(a.units*a.cur)}</span>
+    </label>`).join('');
+}
+
+function addGoal(){
+  const name=document.getElementById('g-name').value.trim();
+  const emoji=document.getElementById('g-emoji').value||'🎯';
+  const target=parseFloat(document.getElementById('g-target').value)||0;
+  const date=document.getElementById('g-date').value;
+  if(!name||!target) return alert('Enter goal name and target.');
+  const checked=document.querySelectorAll('#goal-asset-list input:checked');
+  const linkedAssets=Array.from(checked).map(c=>parseInt(c.value));
+  goals.push({name,emoji,target,date,linkedAssets,id:Date.now()});
+  save(); closeModal('modal-add-goal'); renderGoals();
+  ['g-name','g-emoji','g-target','g-date'].forEach(id=>document.getElementById(id).value='');
+}
+
+function renderGoals(){
+  const grid=document.getElementById('goals-grid');
+  if(!goals.length){
+    grid.innerHTML=`<div style="grid-column:1/-1"><div class="empty-state"><div class="empty-icon">◉</div><div class="empty-text">No goals yet.</div></div></div>`;
+    return;
+  }
+  grid.innerHTML=goals.map((g,gi)=>{
+    const linkedVal=(g.linkedAssets||[]).reduce((s,ai)=>{ const a=assets[ai]; return a?s+a.units*a.cur:s; },0);
+    const progress=g.target?Math.min((linkedVal/g.target)*100,100):0;
+    const chips=(g.linkedAssets||[]).map(ai=>{ const a=assets[ai]; return a?`<span class="asset-chip">${a.subtypeIcon||''} ${a.name} · ${fmt(a.units*a.cur)}<span class="chip-remove" onclick="unlinkAsset(${gi},${ai})"> ×</span></span>`:'' }).join('');
+    const months=g.date?Math.ceil((new Date(g.date)-new Date())/(1000*60*60*24*30)):'—';
+    return `<div class="goal-card">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px;">
+        <div>
+          <div class="goal-name">${g.name}</div>
+          <div class="goal-target">Target: ${fmt(g.target)}</div>
+          ${g.date?`<div style="font-size:10px;color:var(--muted);margin-top:2px;">${g.date} · ${months>0?months+' mo away':'Overdue'}</div>`:''}
+        </div>
+        <div style="font-size:28px;">${g.emoji}</div>
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:baseline;">
+        <span style="font-size:11px;color:var(--muted);">${fmt(linkedVal)} linked</span>
+        <span class="goal-pct">${progress.toFixed(1)}%</span>
+      </div>
+      <div class="progress-bar"><div class="progress-fill" style="width:${progress}%"></div></div>
+      <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--muted);">${fmt(g.target-linkedVal)} remaining</div>
+      <div class="linked-assets">
+        <div class="linked-label">Linked Assets</div>
+        ${chips||'<span style="color:var(--muted);font-size:11px;">No assets linked</span>'}
+        <div style="margin-top:9px;display:flex;gap:7px;">
+          <button class="btn btn-outline btn-sm" onclick="openLinkAssets(${gi})">+ Link</button>
+          <button class="btn btn-danger btn-sm" onclick="deleteGoal(${gi})">Delete</button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function unlinkAsset(gi,ai){ goals[gi].linkedAssets=goals[gi].linkedAssets.filter(x=>x!==ai); save(); renderGoals(); }
+function deleteGoal(gi){ if(!confirm('Delete goal?')) return; goals.splice(gi,1); save(); renderGoals(); }
+function openLinkAssets(gi){
+  document.getElementById('link-gi').value=gi;
+  buildGoalAssetList('link-asset-list',gi);
+  openModal('modal-link-assets');
+}
+function saveLinkAssets(){
+  const gi=parseInt(document.getElementById('link-gi').value);
+  const checked=document.querySelectorAll('#link-asset-list input:checked');
+  goals[gi].linkedAssets=Array.from(checked).map(c=>parseInt(c.value));
+  save(); closeModal('modal-link-assets'); renderGoals();
+}
+
+// ══ NAVIGATION ══
+function navigate(page, navEl){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  document.getElementById('page-'+page).classList.add('active');
+  if(navEl) navEl.classList.add('active');
+  const titles={dashboard:'Dashboard',assets:'Assets','add-asset':'Add Asset',cashflow:'Income & Expenses',income:'Add Income',expense:'Add Expense',goals:'Goal Tracker'};
+  document.getElementById('page-title').textContent=titles[page]||page;
+  if(page==='dashboard')  renderDashboard();
+  if(page==='assets')     renderAssets();
+  if(page==='cashflow')   renderCashflow();
+  if(page==='income')     renderIncomeHistory();
+  if(page==='expense')    renderExpenseHistory();
+  if(page==='goals')      renderGoals();
+  if(page==='add-asset'){
+    // reset wizard to step 1
+    wiz={step:1,category:'',subtype:'',formData:{}};
+    goToStep(1);
+    document.querySelectorAll('.type-card').forEach(c=>c.classList.remove('selected'));
+  }
+}
+
+// ══ MODALS ══
+function openModal(id){
+  if(id==='modal-add-goal') buildGoalAssetList('goal-asset-list',null);
+  document.getElementById(id).classList.add('open');
+}
+function closeModal(id){ document.getElementById(id).classList.remove('open'); }
+document.querySelectorAll('.modal-overlay').forEach(m=>m.addEventListener('click',e=>{ if(e.target===m) m.classList.remove('open'); }));
+
+// ══ UTILS ══
+function today(){ return new Date().toISOString().split('T')[0]; }
+
+// ══ INIT ══
+(function init(){
+  document.getElementById('topbar-date').textContent = new Date().toLocaleDateString('en-IN',{month:'short',year:'numeric',day:'numeric'});
+  ['inc-date','exp-date'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=today(); });
+  renderDashboard();
+})();
+</script>
+</body>
+</html>
