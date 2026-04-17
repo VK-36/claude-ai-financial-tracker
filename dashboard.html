@@ -620,6 +620,30 @@ function getSubtype(cat, key){
   return ASSET_CONFIG[cat]?.subtypes.find(s=>s.key===key);
 }
 
+// ══ CALCULATION FUNCTIONS ══
+
+function calcNSC(principal, rate, years) {
+  return principal * Math.pow(1 + rate/100, years);
+}
+
+function calcMIS(principal, rate) {
+  const monthlyIncome = (principal * rate/100) / 12;
+  return {
+    monthlyIncome,
+    totalValue: principal
+  };
+}
+
+function calcRD(monthly, rate, months) {
+  const n = 4; // quarterly compounding
+  const t = months / 12;
+
+  return monthly * (
+    (Math.pow(1 + rate/100/n, n*t) - 1) /
+    (1 - Math.pow(1 + rate/100/n, -1/n))
+  );
+}
+
 // ══ WIZARD STATE ══
 let wiz = { step:1, category:'', subtype:'' };
 
@@ -761,11 +785,34 @@ function gatherAndReview(){
     const tenure    = parseFloat(document.getElementById('df-tenure')?.value)||0;
     let   curDebt   = parseFloat(document.getElementById('df-cur-debt')?.value)||0;
     if(!principal){ alert('Please enter principal amount.'); return; }
-    if(!curDebt && rate && tenure){
-      curDebt = principal * Math.pow(1 + (rate/100/12), tenure);
-    }
-    Object.assign(wiz.formData, { principal, rate, tenure, units:1, buy:principal, cur:curDebt||principal });
+      
+  let curDebt = 0;
+
+  if (wiz.subtype === 'nsc') {
+    curDebt = calcNSC(principal, rate, tenure / 12);
+  } 
+  else if (wiz.subtype === 'mis') {
+    const result = calcMIS(principal, rate);
+    curDebt = result.totalValue;
+    wiz.formData.monthlyIncome = result.monthlyIncome;
+  } 
+  else if (wiz.subtype === 'rd') {
+    curDebt = calcRD(principal, rate, tenure);
+  } 
+  else {
+    // fallback (FD, TD etc.)
+    curDebt = principal * Math.pow(1 + (rate/100), tenure/12);
   }
+
+  Object.assign(wiz.formData, { 
+    principal, 
+    rate, 
+    tenure, 
+    units: 1, 
+    buy: principal, 
+    cur: curDebt 
+  });
+}
 
   wiz.formData.date  = document.getElementById('df-date')?.value || new Date().toISOString().split('T')[0];
   wiz.formData.notes = document.getElementById('df-notes')?.value || '';
