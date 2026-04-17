@@ -588,9 +588,11 @@ const ASSET_CONFIG = {
     color:'var(--debt)', tagClass:'tag-debt',
     subtypes: [
       { key:'bank-fd',  icon:'🏦', name:'Bank FD',            hint:'Fixed Deposit',        hasUnits:false },
-      { key:'mis',      icon:'📬', name:'Monthly Income Scheme',hint:'Post Office MIS',     hasUnits:false },
-      { key:'rd',       icon:'🔄', name:'Recurring Deposit',   hint:'Monthly RD',           hasUnits:false },
       { key:'debt-mf',  icon:'📋', name:'Debt Mutual Fund',    hint:'Liquid, gilt, credit risk funds', hasUnits:true },
+      { key:'nsc',     icon:'📜', name:'NSC', hasUnits:false, hint:'National Savings Certificate'},
+      { key:'mis',     icon:'📬', name:'Post Office MIS', hasUnits:false, hint:'Monthly Income Scheme' },
+      { key:'rd',      icon:'🔄', name:'Recurring Deposit', hasUnits:false, hint:'Reccurring Deposit' },
+      { key:'td',      icon:'⏳', name:'Time Deposit (TD)', hasUnits:false, hint:'Time Deposit' },
     ]
   },
   Commodity: {
@@ -853,7 +855,21 @@ function filterAssets(f, btn){
 function renderAssets(){
   const list = assetFilter==='all' ? assets : assets.filter(a=>a.category===assetFilter);
   let totInv=0, totCur=0;
-  assets.forEach(a=>{ totInv+=a.units*a.buy; totCur+=a.units*a.cur; });
+  assets.forEach(a=>{ 
+    if (a.category === 'Debt' && !a.unit) {
+    // ✅ value-based assets
+    totInv += a.buy;
+    totCur += a.cur;
+  } 
+  else if (a.isProperty) {
+    totInv += a.buy * a.sqft;
+    totCur += a.cur * a.sqft;
+  } 
+  else {
+    totInv += a.units * a.buy;
+    totCur += a.units * a.cur;
+  }
+});
 
   document.getElementById('a-invested').textContent = fmt(totInv);
   document.getElementById('a-current').textContent  = fmt(totCur);
@@ -876,8 +892,20 @@ function renderAssets(){
 
   tbody.innerHTML = list.map((a,idx)=>{
     const realIdx = assets.indexOf(a);
-    const inv = a.units * a.buy;
-    const cur = a.units * a.cur;
+  let inv, cur;
+
+if (a.category === 'Debt' && !a.unit) {
+  inv = a.buy;
+  cur = a.cur;
+}
+else if (a.isProperty) {
+  inv = a.buy * a.sqft;
+  cur = a.cur * a.sqft;
+}
+else {
+  inv = a.units * a.buy;
+  cur = a.units * a.cur;
+}
     const pnl = cur - inv;
     const pp  = inv ? ((pnl/inv)*100).toFixed(1):0;
 let qtyDisp;
