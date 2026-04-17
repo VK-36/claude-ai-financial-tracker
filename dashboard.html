@@ -218,11 +218,12 @@ select.form-input{cursor:pointer;}
 <div class="main">
   <div class="topbar">
     <div class="page-title" id="page-title">Dashboard</div>
-   <div style="display:flex;align-items:center;gap:14px;">
-  <div style="font-size:11px;color:var(--muted);" id="topbar-date"></div>
-  <div class="avatar">VK</div>
-</div>
-    
+    <div style="display:flex;align-items:center;gap:14px;">
+      <div style="font-size:11px;color:var(--muted);" id="topbar-date"></div>
+      <div class="avatar">VK</div>
+    </div>
+  </div>
+
   <!-- ══ DASHBOARD ══ -->
   <div class="page active" id="page-dashboard">
     <div class="networth-banner">
@@ -1660,7 +1661,7 @@ function today(){ return new Date().toISOString().split('T')[0]; }
   document.getElementById('topbar-date').textContent = new Date().toLocaleDateString('en-IN',{month:'short',year:'numeric',day:'numeric'});
   ['inc-date','exp-date'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=today(); });
   renderDashboard();
-})();    
+})();
 </script>
 </body>
 </html>
