@@ -780,12 +780,15 @@ function gatherAndReview(){
     if(!units||!buy){ alert('Please enter units and buy price.'); return; }
     Object.assign(wiz.formData, { units, buy, cur });
   } else if(wiz.category==='Debt'){
-    const principal = parseFloat(document.getElementById('df-principal')?.value)||0;
-    const rate      = parseFloat(document.getElementById('df-rate')?.value)||0;
-    const tenure    = parseFloat(document.getElementById('df-tenure')?.value)||0;
-    let   curDebt   = parseFloat(document.getElementById('df-cur-debt')?.value)||0;
-    if(!principal){ alert('Please enter principal amount.'); return; }
-      
+  const principal = parseFloat(document.getElementById('df-principal')?.value)||0;
+  const rate      = parseFloat(document.getElementById('df-rate')?.value)||0;
+  const tenure    = parseFloat(document.getElementById('df-tenure')?.value)||0;
+
+  if(!principal){ 
+    alert('Please enter principal amount.'); 
+    return; 
+  }
+
   let curDebt = 0;
 
   if (wiz.subtype === 'nsc') {
@@ -800,7 +803,7 @@ function gatherAndReview(){
     curDebt = calcRD(principal, rate, tenure);
   } 
   else {
-    // fallback (FD, TD etc.)
+    // FD, TD fallback
     curDebt = principal * Math.pow(1 + (rate/100), tenure/12);
   }
 
@@ -854,18 +857,15 @@ function buildReview(){
     <div class="sc-row"><span class="sc-label">Invested</span><span class="sc-val" style="font-family:'Syne',sans-serif;font-size:15px;">${fmt(invested)}</span></div>
     <div class="sc-row"><span class="sc-label">Current Value</span><span class="sc-val" style="font-family:'Syne',sans-serif;font-size:15px;">${fmt(current)}</span></div>
     <div class="sc-row"><span class="sc-label">P&L</span><span class="sc-val ${pnl>=0?'pos':'neg'}" style="font-family:'Syne',sans-serif;font-size:15px;">${pnl>=0?'+':''}${fmt(pnl)}</span></div>`;
-
-  document.getElementById('review-summary').innerHTML = rows;
-}
-
-if (wiz.subtype === 'mis' && wiz.formData.monthlyIncome) {
+if (wiz.subtype === 'mis' && d.monthlyIncome) {
   rows += `
     <div class="sc-row">
       <span class="sc-label">Monthly Income</span>
-      <span class="sc-val">${fmt(wiz.formData.monthlyIncome)}</span>
+      <span class="sc-val">${fmt(d.monthlyIncome)}</span>
     </div>`;
-}
-  
+}  
+  document.getElementById('review-summary').innerHTML = rows;
+
 function confirmAddAsset(){
   const st = getSubtype(wiz.category, wiz.subtype);
   const d  = wiz.formData;
