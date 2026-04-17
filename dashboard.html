@@ -832,6 +832,17 @@ function confirmAddAsset(){
     rate: d.rate||null,
     tenure: d.tenure||null,
   });
+
+    const investedAmount = d.units * d.buy;
+
+transactions.push({
+  id: Date.now() + 1,
+  date: d.date,
+  desc: `Invested in ${d.name}`,
+  cat: 'Investment',
+  type: 'expense',
+  amount: investedAmount
+});
   save();
   // Reset wizard
   wiz = { step:1, category:'', subtype:'', formData:{} };
@@ -880,9 +891,33 @@ function renderAssets(){
     const cur = a.units * a.cur;
     const pnl = cur - inv;
     const pp  = inv ? ((pnl/inv)*100).toFixed(1):0;
-    const qtyDisp = a.isProperty ? `${fmtRaw(a.sqft)} sq.ft` : `${fmtRaw(a.units)} ${a.unit||'units'}`;
-    const buyDisp = a.isProperty ? fmt(a.buy*a.sqft) : fmt(a.buy)+`/${a.unit||'u'}`;
-    const curDisp = a.isProperty ? fmt(a.cur*a.sqft) : fmt(a.cur)+`/${a.unit||'u'}`;
+let qtyDisp;
+
+if (a.category === 'Debt' && !a.unit) {
+  qtyDisp = '—'; // no units
+}
+else if (a.isProperty) {
+  qtyDisp = `${fmtRaw(a.sqft)} sq.ft`;
+}
+else {
+  qtyDisp = `${fmtRaw(a.units)} ${a.unit || 'units'}`;
+}
+    
+ let buyDisp, curDisp;
+
+if (a.category === 'Debt' && !a.unit) {
+  // FD / RD / MIS → no per unit
+  buyDisp = fmt(a.buy);     // principal
+  curDisp = fmt(a.cur);     // maturity/current value
+}
+else if (a.isProperty) {
+  buyDisp = fmt(a.buy * a.sqft);
+  curDisp = fmt(a.cur * a.sqft);
+}
+else {
+  buyDisp = fmt(a.buy) + `/${a.unit || 'u'}`;
+  curDisp = fmt(a.cur) + `/${a.unit || 'u'}`;
+}
     return `<tr>
       <td><div style="font-weight:500;">${a.subtypeIcon||''} ${a.name}</div><div style="font-size:10px;color:var(--muted);">${a.date||''}</div></td>
       <td><span class="tag ${catTag[a.category]||'tag-blue'}">${a.category}</span></td>
