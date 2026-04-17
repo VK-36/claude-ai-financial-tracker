@@ -858,6 +858,14 @@ function buildReview(){
   document.getElementById('review-summary').innerHTML = rows;
 }
 
+if (wiz.subtype === 'mis' && wiz.formData.monthlyIncome) {
+  rows += `
+    <div class="sc-row">
+      <span class="sc-label">Monthly Income</span>
+      <span class="sc-val">${fmt(wiz.formData.monthlyIncome)}</span>
+    </div>`;
+}
+  
 function confirmAddAsset(){
   const st = getSubtype(wiz.category, wiz.subtype);
   const d  = wiz.formData;
