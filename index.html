@@ -587,10 +587,49 @@ console.log("Firebase connected ✅");
 let assets      = JSON.parse(localStorage.getItem('ww_assets2') || '[]');
 let transactions= JSON.parse(localStorage.getItem('ww_txns2')   || '[]');
 let goals       = JSON.parse(localStorage.getItem('ww_goals2')  || '[]');
+
+// 🔥 Load from Firebase
+db.collection("financeData").doc("user1").get()
+  .then((doc) => {
+    if (doc.exists) {
+      const data = doc.data();
+
+      assets = data.assets || [];
+      transactions = data.transactions || [];
+      goals = data.goals || [];
+
+      console.log("Data loaded from Firebase ✅");
+
+      // refresh UI (safe call)
+      if (typeof renderAll === "function") renderAll();
+    } else {
+      console.log("No Firebase data found");
+    }
+  })
+  .catch((error) => {
+    console.error("Error loading Firebase ❌", error);
+  });
+
+
+// ══ SAVE FUNCTION ══
 function save(){
+  // ✅ local storage
   localStorage.setItem('ww_assets2', JSON.stringify(assets));
-  localStorage.setItem('ww_txns2',   JSON.stringify(transactions));
-  localStorage.setItem('ww_goals2',  JSON.stringify(goals));
+  localStorage.setItem('ww_txns2', JSON.stringify(transactions));
+  localStorage.setItem('ww_goals2', JSON.stringify(goals));
+
+  // 🔥 Firebase save
+  db.collection("financeData").doc("user1").set({
+    assets: assets,
+    transactions: transactions,
+    goals: goals
+  })
+  .then(() => {
+    console.log("Data saved to Firebase ✅");
+  })
+  .catch((error) => {
+    console.error("Error saving to Firebase ❌", error);
+  });
 }
 
 const fmt = n => '₹' + Number(n||0).toLocaleString('en-IN',{maximumFractionDigits:2});
